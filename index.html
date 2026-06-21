@@ -6,26 +6,75 @@
     <title>日程提醒</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2E54A1">
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
         :root {
             --base-font-size: 14px;
             --header-height: 50px;
             --time-bar-height: 36px;
         }
-        @media (max-width: 400px) { :root { --base-font-size: 12px; } }
-        @media (min-width: 401px) and (max-width: 600px) { :root { --base-font-size: 13px; } }
-        @media (min-width: 601px) { :root { --base-font-size: 14px; } }
+        @media (max-width: 400px) {
+            :root { --base-font-size: 12px; }
+            .time-row input { font-size: 12px !important; }
+            .time-row span { font-size: 11px !important; }
+        }
+        @media (min-width: 401px) and (max-width: 600px) {
+            :root { --base-font-size: 13px; }
+        }
+        @media (min-width: 601px) {
+            :root { --base-font-size: 14px; }
+        }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Microsoft YaHei', sans-serif; }
-        body { background: #f5f5f5; display: flex; flex-direction: column; height: 100vh; overflow: hidden; font-size: var(--base-font-size); }
-        .header { background: #2E54A1; color: #FFF2BD; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; height: var(--header-height); flex-shrink: 0; }
-        .header .title { font-size: 1.4em; display: flex; align-items: center; gap: 6px; }
-        .header button { background: #FFF2BD; border: none; width: 36px; height: 36px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1.1em; display: flex; align-items: center; justify-content: center; }
-        .current-time { background: #e9ecef; padding: 0 15px; font-size: 0.85em; text-align: center; border-bottom: 1px solid #ccc; height: var(--time-bar-height); line-height: var(--time-bar-height); flex-shrink: 0; }
-        .table-container { flex: 1; overflow-y: auto; padding: 8px 8px 70px 8px; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; table-layout: fixed; border-collapse: collapse; background: white; font-size: var(--base-font-size); }
-        th { background: #2E54A1; color: #FFF2BD; padding: 8px 4px; position: sticky; top: 0; z-index: 3; text-align: center; }
-        td { padding: 6px 4px; border-bottom: 1px solid #ddd; text-align: center; vertical-align: middle; }
+        body {
+            background: #f5f5f5; display: flex; flex-direction: column;
+            height: 100vh; overflow: hidden; font-size: var(--base-font-size);
+            -webkit-overflow-scrolling: touch;
+        }
+        .header {
+            background: #2E54A1; color: #FFF2BD; padding: 0 12px;
+            display: flex; align-items: center; justify-content: space-between;
+            height: var(--header-height); flex-shrink: 0;
+        }
+        .header .title {
+            font-size: 1.4em; display: flex; align-items: center; gap: 6px;
+            flex-shrink: 0; max-width: calc(100% - 100px);
+        }
+        .header .btn-row {
+            display: flex; gap: 0.5ch; flex-shrink: 0;
+        }
+        .header button {
+            background: #FFF2BD; border: none; width: 36px; height: 36px; border-radius: 10px;
+            font-weight: bold; cursor: pointer; font-size: 1.1em;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .current-time {
+            background: #e9ecef; padding: 0 15px; font-size: 0.85em; text-align: center;
+            border-bottom: 1px solid #ccc; height: var(--time-bar-height);
+            line-height: var(--time-bar-height); position: relative; flex-shrink: 0;
+        }
+        .watermark {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            color: rgba(0,0,0,0.08); font-size: 0.75em; pointer-events: none;
+        }
+        .table-container {
+            flex: 1; overflow-y: auto; padding: 8px 8px 70px 8px;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            touch-action: pan-y;
+        }
+        table {
+            width: 100%; table-layout: fixed; border-collapse: collapse;
+            background: white; font-size: var(--base-font-size);
+        }
+        th {
+            background: #2E54A1; color: #FFF2BD; padding: 8px 4px;
+            position: sticky; top: 0; z-index: 3; text-align: center;
+        }
+        td {
+            padding: 6px 4px; border-bottom: 1px solid #ddd; text-align: center;
+            vertical-align: middle;
+        }
         th:nth-child(1) { width: 5em; }
         th:nth-child(2) { width: 3em; }
         th:nth-child(3) { width: 3em; }
@@ -33,45 +82,97 @@
         th:nth-child(5) { width: 3.5em; }
         th:nth-child(6) { width: 3em; }
 
-        .date-separator td { background: #D9ECFF; text-align: left; padding: 8px 4px; }
-        .date-text { background: #2E54A1; color: #FFF2BD; padding: 4px 8px; border-radius: 4px; display: inline-block; font-weight: bold; }
+        .date-separator td {
+            background: #D9ECFF; text-align: left; padding: 8px 4px;
+        }
+        .date-text {
+            background: #2E54A1; color: #FFF2BD; padding: 4px 8px;
+            border-radius: 4px; display: inline-block; font-weight: bold;
+        }
         .row-completed td { color: #8eb47e; }
         .row-urgent td { color: #d04040; }
 
-        .deadline-cell { display: flex; flex-direction: column; align-items: center; }
-        .status-text { font-size: 0.9em; margin-top: 6px; font-weight: bold; }
-        .countdown-cell { display: flex; flex-direction: column; align-items: center; line-height: 1.4; }
-        .btn-group { display: flex; flex-direction: column; gap: 3px; align-items: center; }
-        .btn-group button { padding: 3px 6px; font-size: 0.75em; border: none; border-radius: 4px; background: #e0e0e0; cursor: pointer; width: 100%; }
+        .deadline-cell {
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .status-text {
+            font-size: 0.9em; margin-top: 6px; font-weight: bold;
+        }
+        .countdown-cell {
+            display: flex; flex-direction: column; align-items: center;
+            line-height: 1.4;
+        }
+        .btn-group {
+            display: flex; flex-direction: column; gap: 3px; align-items: center;
+        }
+        .btn-group button {
+            padding: 3px 6px; font-size: 0.75em; border: none;
+            border-radius: 4px; background: #e0e0e0; cursor: pointer; width: 100%;
+        }
         .btn-group .btn-danger { background: #ffcccc; }
 
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100; }
-        .modal-content { background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 420px; max-height: 85vh; overflow-y: auto; }
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-content {
+            background: white; padding: 20px; border-radius: 12px; width: 90%;
+            max-width: 420px; max-height: 85vh; overflow-y: auto;
+        }
         .modal-content h3 { margin-bottom: 15px; color: #2E54A1; }
-        .modal-content input[type="text"], .modal-content input[type="number"] { width: 100%; padding: 8px; margin: 6px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 1em; }
-        .time-row { display: flex; align-items: center; gap: 3px; flex-wrap: nowrap; }
+        .modal-content input[type="text"], .modal-content input[type="number"], .modal-content textarea {
+            width: 100%; padding: 8px; margin: 6px 0; border: 1px solid #ccc;
+            border-radius: 6px; font-size: 1em;
+        }
+        .time-row {
+            display: flex; align-items: center; gap: 3px; flex-wrap: nowrap;
+        }
         .time-row input { text-align: center; padding: 6px 2px; }
         .time-row .year { width: 5em; }
         .time-row .small { width: 3.5em; }
-        .time-row span { font-size: 0.85em; }
+        .time-row span { font-size: 0.85em; white-space: nowrap; }
         .quick-btns { display: flex; flex-wrap: wrap; gap: 4px; margin: 10px 0; }
-        .quick-btns button { background: #e0e0e0; color: black; padding: 6px 8px; font-size: 0.9em; border: none; border-radius: 6px; cursor: pointer; flex: 1 1 auto; min-width: 70px; text-align: center; }
+        .quick-btns button {
+            background: #e0e0e0; color: black; padding: 6px 8px;
+            font-size: 0.9em; border: none; border-radius: 6px; cursor: pointer;
+            flex: 1 1 auto; min-width: 70px; text-align: center;
+        }
         .quick-btns .break { flex-basis: 100%; height: 0; }
+
         .action-btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
-        .action-btns button { padding: 8px 16px; font-size: 1em; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .action-btns button {
+            padding: 8px 16px; font-size: 1em; border: none; border-radius: 6px;
+            cursor: pointer; font-weight: bold;
+        }
         .btn-primary { background: #2E54A1; color: #FFF2BD; }
         .btn-cancel { background: #ccc; color: #333; }
 
         .status-options { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
-        .status-options button { padding: 10px; font-size: 1em; border: none; border-radius: 6px; background: #f0f0f0; cursor: pointer; }
+        .status-options button {
+            padding: 10px; font-size: 1em; border: none; border-radius: 6px;
+            background: #f0f0f0; cursor: pointer;
+        }
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; margin: 8px 0; }
+        .switch { position: relative; width: 48px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 26px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: #2E54A1; }
+        input:checked + .slider:before { transform: translateX(22px); }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="title">📅 日程提醒</div>
-        <button onclick="openAddModal()">➕</button>
+        <div class="btn-row">
+            <button onclick="openSettings()" title="邮件设置">📧⚙️</button>
+            <button onclick="openAddModal()" title="添加日程">➕</button>
+        </div>
     </div>
-    <div class="current-time" id="currentTime">加载中…</div>
+    <div class="current-time" id="currentTime">
+        加载中…
+        <span class="watermark">DESIGNED BY CDH</span>
+    </div>
     <div class="table-container" id="tableContainer">
         <table id="scheduleTable">
             <thead>
@@ -112,7 +213,7 @@
         </div>
     </div>
 
-    <!-- 状态选择 -->
+    <!-- 状态选择模态框 -->
     <div class="modal" id="statusModal">
         <div class="modal-content">
             <h3>选择状态</h3>
@@ -127,7 +228,7 @@
     <div class="modal" id="alertModal">
         <div class="modal-content" style="text-align: center;">
             <h3>⏰ 日程提醒</h3>
-            <p id="alertMsg"></p>
+            <p id="alertMsg" style="margin: 15px 0; font-size: 1.1em;"></p>
             <div class="action-btns" style="justify-content: center;">
                 <button class="btn-primary" onclick="alertComplete()">已完成</button>
                 <button class="btn-cancel" onclick="alertPostpone()">延期提醒</button>
@@ -135,10 +236,10 @@
         </div>
     </div>
 
-    <!-- 确认完成 -->
+    <!-- 确认完成模态框 -->
     <div class="modal" id="confirmModal">
         <div class="modal-content" style="text-align: center;">
-            <p>确认标记为“已完成”？</p>
+            <p style="font-size: 1.2em;">确认标记为“已完成”？</p>
             <div class="action-btns" style="justify-content: center;">
                 <button class="btn-cancel" onclick="closeConfirmModal()">取消</button>
                 <button class="btn-primary" onclick="confirmComplete()">确认完成</button>
@@ -146,10 +247,10 @@
         </div>
     </div>
 
-    <!-- 早于当前时间确认 -->
+    <!-- 时间早于当前确认弹窗 -->
     <div class="modal" id="pastTimeModal">
         <div class="modal-content" style="text-align: center;">
-            <p>确认要设置该时间吗？<br>该时间早于当前时间</p>
+            <p style="font-size: 1.1em;">确认要设置该时间吗？<br>该时间早于当前时间</p>
             <div class="action-btns" style="justify-content: center;">
                 <button class="btn-cancel" onclick="closePastTimeModal()">取消</button>
                 <button class="btn-primary" onclick="confirmPastTime()">确认</button>
@@ -157,19 +258,54 @@
         </div>
     </div>
 
+    <!-- 设置模态框 -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <h3>⚙️ 设置</h3>
+            <div class="toggle-row">
+                <span>启用邮件通知</span>
+                <label class="switch">
+                    <input type="checkbox" id="emailEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <p style="font-size:0.8em; color:#666;">需配置EmailJS</p>
+            <input type="text" id="emailPublicKey" placeholder="EmailJS Public Key">
+            <input type="text" id="emailServiceId" placeholder="Service ID">
+            <input type="text" id="emailTemplateId" placeholder="Template ID">
+            <input type="text" id="emailTo" placeholder="收件邮箱 (如 your@qq.com)">
+            <div class="action-btns">
+                <button class="btn-primary" onclick="confirmSettings()">确认</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        emailjs.init('');
+
         const STORAGE_KEY = 'schedules_data';
         const NOTIFIED_KEY = 'notified_schedule_ids';
+        const EMAIL_REMINDER_KEY = 'email_reminders_sent';
+        const EMAIL_SETTINGS_KEY = 'email_settings';
         let schedules = [];
         let editingId = null;
         let alertingId = null;
         let currentStatusScheduleId = null;
         let pendingCompleteId = null;
         let notifiedSet = new Set();
+        let emailReminders = {};
+        let emailSettings = { enabled: false, publicKey: '', serviceId: '', templateId: '', to: '' };
         let pastTimePending = null;
         let autoScrollTimer = null;
 
-        // 数据加载/保存
+        // ---------- 数据加载/保存 ----------
+        function loadEmailReminders() {
+            const raw = localStorage.getItem(EMAIL_REMINDER_KEY);
+            emailReminders = raw ? JSON.parse(raw) : {};
+        }
+        function saveEmailReminders() {
+            localStorage.setItem(EMAIL_REMINDER_KEY, JSON.stringify(emailReminders));
+        }
         function loadNotifiedSet() {
             const raw = localStorage.getItem(NOTIFIED_KEY);
             notifiedSet = raw ? new Set(JSON.parse(raw)) : new Set();
@@ -183,6 +319,45 @@
         }
         function saveData() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(schedules));
+        }
+        function loadEmailSettings() {
+            const raw = localStorage.getItem(EMAIL_SETTINGS_KEY);
+            if (raw) {
+                emailSettings = JSON.parse(raw);
+                document.getElementById('emailEnabled').checked = emailSettings.enabled;
+                document.getElementById('emailPublicKey').value = emailSettings.publicKey || '';
+                document.getElementById('emailServiceId').value = emailSettings.serviceId || '';
+                document.getElementById('emailTemplateId').value = emailSettings.templateId || '';
+                document.getElementById('emailTo').value = emailSettings.to || '';
+                if (emailSettings.publicKey) emailjs.init(emailSettings.publicKey);
+            }
+        }
+        function saveEmailSettingsToStorage() {
+            emailSettings.enabled = document.getElementById('emailEnabled').checked;
+            emailSettings.publicKey = document.getElementById('emailPublicKey').value.trim();
+            emailSettings.serviceId = document.getElementById('emailServiceId').value.trim();
+            emailSettings.templateId = document.getElementById('emailTemplateId').value.trim();
+            emailSettings.to = document.getElementById('emailTo').value.trim();
+            localStorage.setItem(EMAIL_SETTINGS_KEY, JSON.stringify(emailSettings));
+            if (emailSettings.publicKey) emailjs.init(emailSettings.publicKey);
+        }
+
+        function canSendEmail() {
+            return emailSettings.enabled && emailSettings.publicKey && emailSettings.serviceId && emailSettings.templateId && emailSettings.to;
+        }
+
+        function sendReminderEmail(schedule, remainingText) {
+            if (!canSendEmail()) return;
+            emailjs.send(emailSettings.serviceId, emailSettings.templateId, {
+                to_email: emailSettings.to,
+                thing: schedule.thing,
+                responsible: schedule.responsible || '无',
+                implementer: schedule.implementer || '无',
+                deadline: schedule.deadline,
+                status: '提醒',
+                time: new Date().toLocaleString(),
+                subject: `提醒事项 剩余 ${remainingText}`
+            }).catch(err => console.warn('邮件发送失败:', err));
         }
 
         function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,5); }
@@ -203,22 +378,67 @@
             const hours = Math.floor((totalSec % 86400) / 3600);
             const mins = Math.floor((totalSec % 3600) / 60);
             const secs = totalSec % 60;
-            return { days, hours, mins, secs };
+            return { days, hours, mins, secs, totalSec };
+        }
+        function resetEmailRemindersForSchedule(id) {
+            delete emailReminders[id];
+            saveEmailReminders();
         }
 
-        function checkAndNotifyExpired(schedule, now) {
-            if (!schedule.completed && new Date(schedule.deadline) <= now && !notifiedSet.has(schedule.id)) {
-                notifiedSet.add(schedule.id); saveNotifiedSet();
-                alertingId = schedule.id;
-                document.getElementById('alertMsg').innerHTML = `<strong>事项：</strong>${schedule.thing}<br>时间已到`;
-                document.getElementById('alertModal').style.display = 'flex';
+        function checkEmailReminders(schedule, now) {
+            if (!canSendEmail() || schedule.completed) return;
+            const deadline = new Date(schedule.deadline);
+            const diffSec = Math.floor((deadline - now) / 1000);
+            if (diffSec <= 0) return;
+            const id = schedule.id;
+            if (!emailReminders[id]) emailReminders[id] = [];
+            const points = [];
+            if (diffSec > 3600) { points.push(6 * 3600); points.push(3600); }
+            else if (diffSec > 0) { points.push(Math.floor(diffSec / 2)); }
+            for (const p of points) {
+                const key = `${p}s`;
+                if (!emailReminders[id].includes(key) && diffSec <= p + 60 && diffSec >= p - 60) {
+                    emailReminders[id].push(key); saveEmailReminders();
+                    const parts = calcCountdownParts(schedule.deadline, now);
+                    if (parts) {
+                        let remain = '';
+                        if (parts.days > 0) remain += `${parts.days}天`;
+                        if (parts.hours > 0 || parts.days > 0) remain += `${parts.hours}时`;
+                        remain += `${parts.mins}分`;
+                        sendReminderEmail(schedule, remain);
+                    }
+                }
             }
         }
 
-        // 自动回弹
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+        function showSystemNotification(schedule) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('⏰ 日程提醒', { body: schedule.thing, tag: schedule.id });
+            }
+        }
+        function checkAndNotifyExpired(schedule, now) {
+            if (!schedule.completed && new Date(schedule.deadline) <= now && !notifiedSet.has(schedule.id)) {
+                notifiedSet.add(schedule.id); saveNotifiedSet();
+                showSystemNotification(schedule);
+                if (document.visibilityState === 'visible') {
+                    alertingId = schedule.id;
+                    document.getElementById('alertMsg').innerHTML = `<strong>事项：</strong>${schedule.thing}<br>时间已到`;
+                    document.getElementById('alertModal').style.display = 'flex';
+                }
+            }
+        }
+
+        // ---------- 自动滚动至今天 ----------
         function resetAutoScroll() {
             if (autoScrollTimer) clearTimeout(autoScrollTimer);
-            autoScrollTimer = setTimeout(() => scrollToToday(), 10000);
+            autoScrollTimer = setTimeout(() => {
+                scrollToToday();
+            }, 10000);
         }
         function scrollToToday() {
             if (!schedules.length) return;
@@ -234,9 +454,10 @@
             }
         }
 
+        // ---------- 表格渲染 ----------
         function renderTable() {
             const now = getNow();
-            document.getElementById('currentTime').textContent = `当前时间：${now.toLocaleString()}`;
+            document.getElementById('currentTime').innerHTML = `当前时间：${now.toLocaleString()} <span class="watermark">DESIGNED BY CDH</span>`;
             schedules.sort((a,b) => (a.deadline||'').localeCompare(b.deadline||''));
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
@@ -258,7 +479,7 @@
                 if (isCompleted) {
                     rowClass = 'row-completed';
                     statusHtml = '<span class="status-text" style="color:#8eb47e;">已完成</span>';
-                    countdownHtml = '';
+                    countdownHtml = s.completed_countdown || '';
                 } else if (deadline) {
                     const dl = new Date(deadline);
                     const diffMs = dl - now;
@@ -284,6 +505,7 @@
                             countdownHtml = seg.join('<br>');
                         }
                         rowClass = diffHours <= 3 ? 'row-urgent' : '';
+                        checkEmailReminders(s, now);
                     }
                 }
 
@@ -306,7 +528,7 @@
             resetAutoScroll();
         }
 
-        // 状态相关
+        // ---------- 状态相关 ----------
         function openStatusModal(id) {
             currentStatusScheduleId = id;
             const s = schedules.find(i => i.id === id);
@@ -314,48 +536,81 @@
             const div = document.getElementById('statusOptions');
             div.innerHTML = '';
             if (s.completed) {
-                div.innerHTML = '<button disabled>已完成</button>';
-                const btn = document.createElement('button');
-                btn.textContent = '延期提醒';
-                btn.onclick = () => { closeStatusModal(); openEditModal(id); };
-                div.appendChild(btn);
+                const doneBtn = document.createElement('button');
+                doneBtn.textContent = '已完成';
+                doneBtn.disabled = true;
+                doneBtn.style.background = '#ccc';
+                div.appendChild(doneBtn);
+                const postponeBtn = document.createElement('button');
+                postponeBtn.textContent = '延期提醒';
+                postponeBtn.onclick = () => { closeStatusModal(); openEditModal(id); };
+                div.appendChild(postponeBtn);
             } else {
-                ['已完成','加油干！','进行中'].forEach(txt => {
-                    const btn = document.createElement('button');
-                    btn.textContent = txt;
-                    btn.onclick = () => {
-                        closeStatusModal();
-                        if (txt === '已完成') openConfirmModal(id);
-                        else {
-                            const sch = schedules.find(i => i.id === id);
-                            if (sch) { sch.completed = false; notifiedSet.delete(id); saveNotifiedSet(); saveData(); }
-                        }
-                    };
-                    div.appendChild(btn);
-                });
+                const completeBtn = document.createElement('button');
+                completeBtn.textContent = '已完成';
+                completeBtn.onclick = () => { closeStatusModal(); openConfirmModal(id); };
+                div.appendChild(completeBtn);
+                const urgentBtn = document.createElement('button');
+                urgentBtn.textContent = '加油干！';
+                urgentBtn.onclick = () => {
+                    const sch = schedules.find(i => i.id === id);
+                    if (sch) { sch.completed = false; notifiedSet.delete(id); saveNotifiedSet(); saveData(); }
+                    closeStatusModal();
+                };
+                div.appendChild(urgentBtn);
+                const progressBtn = document.createElement('button');
+                progressBtn.textContent = '进行中';
+                progressBtn.onclick = () => {
+                    const sch = schedules.find(i => i.id === id);
+                    if (sch) { sch.completed = false; notifiedSet.delete(id); saveNotifiedSet(); saveData(); }
+                    closeStatusModal();
+                };
+                div.appendChild(progressBtn);
             }
             document.getElementById('statusModal').style.display = 'flex';
         }
         function closeStatusModal() { document.getElementById('statusModal').style.display = 'none'; }
-        function openConfirmModal(id) { pendingCompleteId = id; document.getElementById('confirmModal').style.display = 'flex'; }
-        function closeConfirmModal() { pendingCompleteId = null; document.getElementById('confirmModal').style.display = 'none'; }
+
+        function openConfirmModal(id) {
+            pendingCompleteId = id;
+            document.getElementById('confirmModal').style.display = 'flex';
+        }
+        function closeConfirmModal() {
+            pendingCompleteId = null;
+            document.getElementById('confirmModal').style.display = 'none';
+        }
         function confirmComplete() {
             if (pendingCompleteId) {
                 const s = schedules.find(i => i.id === pendingCompleteId);
-                if (s) { s.completed = true; notifiedSet.delete(pendingCompleteId); saveNotifiedSet(); saveData(); }
+                if (s) {
+                    s.completed = true;
+                    s.completed_countdown = '';
+                    notifiedSet.delete(pendingCompleteId);
+                    saveNotifiedSet();
+                    saveData();
+                    resetEmailRemindersForSchedule(pendingCompleteId);
+                }
             }
             closeConfirmModal();
         }
+
         function alertComplete() {
-            if (alertingId) { const s = schedules.find(i => i.id === alertingId); if (s) { s.completed = true; saveData(); } }
+            if (alertingId) {
+                const s = schedules.find(i => i.id === alertingId);
+                if (s) { s.completed = true; saveData(); resetEmailRemindersForSchedule(alertingId); }
+            }
             document.getElementById('alertModal').style.display = 'none';
             alertingId = null;
         }
         function alertPostpone() {
-            if (alertingId) { document.getElementById('alertModal').style.display = 'none'; openEditModal(alertingId); alertingId = null; }
+            if (alertingId) {
+                document.getElementById('alertModal').style.display = 'none';
+                openEditModal(alertingId);
+                alertingId = null;
+            }
         }
 
-        // 添加/修改
+        // ---------- 添加/修改日程 ----------
         function openAddModal() {
             editingId = null;
             document.getElementById('modalTitle').textContent = '添加日程';
@@ -380,6 +635,7 @@
             document.getElementById('day').value = String(dt.getDate()).padStart(2,'0');
             document.getElementById('hour').value = String(dt.getHours()).padStart(2,'0');
             document.getElementById('minute').value = String(dt.getMinutes()).padStart(2,'0');
+            document.getElementById('errorMsg').textContent = '';
             document.getElementById('editModal').style.display = 'flex';
         }
         function closeModal() { document.getElementById('editModal').style.display = 'none'; }
@@ -423,14 +679,17 @@
             finalizeSchedule(thing, resp, impl, y, mo, d, h, mi);
         }
 
-        function closePastTimeModal() { document.getElementById('pastTimeModal').style.display = 'none'; pastTimePending = null; }
+        function closePastTimeModal() {
+            document.getElementById('pastTimeModal').style.display = 'none';
+            pastTimePending = null;
+        }
         function confirmPastTime() {
             if (!pastTimePending) return;
             const { year, month, day, hour, minute, thing, resp, impl, isEditing } = pastTimePending;
             const deadlineStr = formatDateTime(new Date(year, month-1, day, hour, minute));
             if (isEditing) {
                 const s = schedules.find(i => i.id === isEditing);
-                if (s) { s.deadline = deadlineStr; s.completed = true; notifiedSet.delete(isEditing); saveNotifiedSet(); }
+                if (s) { s.deadline = deadlineStr; s.completed = true; notifiedSet.delete(isEditing); saveNotifiedSet(); resetEmailRemindersForSchedule(isEditing); }
             } else {
                 schedules.push({ id: generateId(), thing, responsible: resp, implementer: impl, deadline: deadlineStr, completed: true });
             }
@@ -444,7 +703,7 @@
             const deadlineStr = formatDateTime(new Date(y, mo-1, d, h, mi));
             if (editingId) {
                 const s = schedules.find(i => i.id === editingId);
-                if (s) { s.deadline = deadlineStr; s.completed = false; notifiedSet.delete(editingId); saveNotifiedSet(); }
+                if (s) { s.deadline = deadlineStr; s.completed = false; notifiedSet.delete(editingId); saveNotifiedSet(); resetEmailRemindersForSchedule(editingId); }
             } else {
                 schedules.push({ id: generateId(), thing, responsible: resp, implementer: impl, deadline: deadlineStr, completed: false });
             }
@@ -453,25 +712,60 @@
         }
 
         function deleteSchedule(id) {
-            if (confirm('确定删除吗？')) {
+            if (confirm('确定删除此日程吗？')) {
                 schedules = schedules.filter(i => i.id !== id);
                 notifiedSet.delete(id); saveNotifiedSet();
+                resetEmailRemindersForSchedule(id);
                 saveData();
             }
         }
 
-        // 初始化
+        // ---------- 设置 ----------
+        function openSettings() { loadEmailSettings(); document.getElementById('settingsModal').style.display = 'flex'; }
+        function confirmSettings() {
+            const enabled = document.getElementById('emailEnabled').checked;
+            const publicKey = document.getElementById('emailPublicKey').value.trim();
+            const serviceId = document.getElementById('emailServiceId').value.trim();
+            const templateId = document.getElementById('emailTemplateId').value.trim();
+            const to = document.getElementById('emailTo').value.trim();
+            if (enabled && (!publicKey || !serviceId || !templateId || !to)) {
+                alert('请填写完整的邮件配置，或关闭邮件开关');
+                return;
+            }
+            saveEmailSettingsToStorage();
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        // ---------- 初始化 ----------
         function init() {
             loadData();
             loadNotifiedSet();
+            loadEmailReminders();
+            loadEmailSettings();
+            requestNotificationPermission();
             renderTable();
             setInterval(renderTable, 1000);
             window.onclick = e => { if (e.target.classList.contains('modal')) e.target.style.display = 'none'; };
 
+            // 滚动监听用于10秒自动回弹
             const tc = document.getElementById('tableContainer');
             tc.addEventListener('scroll', resetAutoScroll);
             tc.addEventListener('touchmove', resetAutoScroll);
             resetAutoScroll();
+
+            // Service Worker 自动更新
+          
+                    };
+                }).catch(err => console.log('SW注册失败', err));
+
+                let refreshing = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (!refreshing) {
+                        refreshing = true;
+                        window.location.reload();
+                    }
+                });
+            }
         }
         init();
     </script>
