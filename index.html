@@ -7,36 +7,226 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2E54A1">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Microsoft YaHei', sans-serif; }
-        body { background: #f5f5f5; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        .header { background: #2E54A1; color: #FFF2BD; padding: 12px 15px; display: flex; align-items: center; justify-content: space-between; }
-        .header h2 { font-size: 20px; }
-        .header button { background: #FFF2BD; border: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
-        .current-time { background: #e9ecef; padding: 8px 15px; font-size: 14px; text-align: right; border-bottom: 1px solid #ccc; }
-        .table-container { flex: 1; overflow-y: auto; padding: 10px; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; background: white; }
-        th { background: #2E54A1; color: #FFF2BD; padding: 10px 6px; position: sticky; top: 0; z-index: 2; white-space: nowrap; }
-        td { padding: 8px 5px; border-bottom: 1px solid #ddd; text-align: center; word-break: break-all; }
-        .date-separator { background: #D9ECFF; }
-        .date-separator td { text-align: left; padding: 8px; }
-        .date-text { background: #2E54A1; color: #FFF2BD; padding: 4px 10px; border-radius: 4px; display: inline-block; font-weight: bold; }
-        .row-completed { color: #8eb47e; }
-        .row-urgent { color: #d04040; }
-        .btn-group button { margin: 2px; padding: 4px 8px; font-size: 12px; border: none; border-radius: 4px; background: #e0e0e0; cursor: pointer; }
+        :root {
+            --base-font-size: 14px;
+        }
+        @media (max-width: 400px) {
+            :root { --base-font-size: 12px; }
+        }
+        @media (min-width: 401px) and (max-width: 600px) {
+            :root { --base-font-size: 13px; }
+        }
+        @media (min-width: 601px) {
+            :root { --base-font-size: 14px; }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        body {
+            background: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            font-size: var(--base-font-size);
+        }
+        .header {
+            background: #2E54A1;
+            color: #FFF2BD;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header h2 { font-size: 1.4em; }
+        .header button {
+            background: #FFF2BD;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        .current-time {
+            background: #e9ecef;
+            padding: 6px 15px;
+            font-size: 0.9em;
+            text-align: right;
+            border-bottom: 1px solid #ccc;
+        }
+        .table-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+            -webkit-overflow-scrolling: touch;
+        }
+        table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            background: white;
+            font-size: var(--base-font-size);
+            word-break: break-all;
+        }
+        th {
+            background: #2E54A1;
+            color: #FFF2BD;
+            padding: 8px 4px;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            text-align: center;
+        }
+        td {
+            padding: 6px 4px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        /* 固定字符宽度的列 */
+        th:nth-child(1) { width: 5em; }   /* 事项 5个汉字宽度 */
+        th:nth-child(2) { width: 3em; }   /* 负责人 3个汉字 */
+        th:nth-child(3) { width: 3em; }   /* 落实人 3个汉字 */
+        th:nth-child(4) { width: 10ch; }  /* 截止时间 10个字符(YYYY-MM-DD) */
+        th:nth-child(5) { width: 3em; }   /* 倒计时 3个汉字宽度 */
+        th:nth-child(6) { width: 3em; }   /* 操作 3个汉字宽度 */
+
+        /* 截止时间内部换行：日期和时分分开 */
+        .deadline-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1.3;
+        }
+
+        .date-separator td {
+            background: #D9ECFF;
+            text-align: left;
+            padding: 8px 4px;
+        }
+        .date-text {
+            background: #2E54A1;
+            color: #FFF2BD;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            font-weight: bold;
+            font-size: inherit;
+        }
+        .row-completed td { color: #8eb47e; }
+        .row-urgent td { color: #d04040; }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            align-items: center;
+        }
+        .btn-group button {
+            padding: 3px 6px;
+            font-size: 0.75em;
+            border: none;
+            border-radius: 4px;
+            background: #e0e0e0;
+            cursor: pointer;
+            width: 100%;
+        }
         .btn-group .btn-danger { background: #ffcccc; }
+
         /* 模态框 */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100; }
-        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 420px; max-height: 80vh; overflow-y: auto; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
         .modal-content h3 { margin-bottom: 15px; color: #2E54A1; }
-        .modal-content input[type="text"], .modal-content input[type="number"] { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
-        .modal-content .time-row { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
-        .modal-content .time-row input { width: 60px; text-align: center; }
-        .modal-content .quick-btns { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
-        .modal-content .quick-btns button { background: #e0e0e0; color: black; padding: 8px 10px; font-size: 14px; border: none; border-radius: 6px; cursor: pointer; }
-        .modal-content .action-btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
-        .modal-content .action-btns button { padding: 10px 20px; font-size: 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .modal-content input[type="text"],
+        .modal-content input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin: 6px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+        .time-row {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .time-row input { width: 55px; text-align: center; }
+        .quick-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin: 10px 0;
+        }
+        .quick-btns button {
+            background: #e0e0e0;
+            color: black;
+            padding: 6px 8px;
+            font-size: 0.9em;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .action-btns {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .action-btns button {
+            padding: 8px 16px;
+            font-size: 1em;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
         .btn-primary { background: #2E54A1; color: #FFF2BD; }
         .btn-cancel { background: #ccc; color: #333; }
+
+        .status-options {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .status-options button {
+            padding: 10px;
+            font-size: 1em;
+            border: none;
+            border-radius: 6px;
+            background: #f0f0f0;
+            cursor: pointer;
+        }
+        .status-options button:hover { background: #e0e0e0; }
+
+        #confirmModal .modal-content {
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -45,10 +235,12 @@
         <button onclick="openAddModal()">➕ 添加</button>
     </div>
     <div class="current-time" id="currentTime">加载中…</div>
-    <div class="table-container" id="tableContainer">
+    <div class="table-container">
         <table id="scheduleTable">
             <thead>
-                <tr><th>事项</th><th>负责人</th><th>落实人</th><th>截止时间</th><th>倒计时</th><th>操作</th></tr>
+                <tr>
+                    <th>事项</th><th>负责人</th><th>落实人</th><th>截止时间</th><th>倒计时</th><th>操作</th>
+                </tr>
             </thead>
             <tbody id="tableBody"></tbody>
         </table>
@@ -75,10 +267,21 @@
                 <button onclick="quickAdd(180)">3小时后</button>
                 <button onclick="setNowTime()">当前时间</button>
             </div>
-            <div id="errorMsg" style="color: red; font-size: 13px; min-height: 20px;"></div>
+            <div id="errorMsg" style="color: red; font-size: 0.9em; min-height: 20px;"></div>
             <div class="action-btns">
                 <button class="btn-cancel" onclick="closeModal()">取消</button>
                 <button class="btn-primary" onclick="saveSchedule()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 状态选择模态框 -->
+    <div class="modal" id="statusModal">
+        <div class="modal-content">
+            <h3>选择状态</h3>
+            <div class="status-options" id="statusOptions"></div>
+            <div class="action-btns" style="justify-content: center;">
+                <button class="btn-cancel" onclick="closeStatusModal()">取消</button>
             </div>
         </div>
     </div>
@@ -87,10 +290,21 @@
     <div class="modal" id="alertModal">
         <div class="modal-content" style="text-align: center;">
             <h3>⏰ 日程提醒</h3>
-            <p id="alertMsg" style="margin: 15px 0; font-size: 16px; line-height: 1.6;"></p>
+            <p id="alertMsg" style="margin: 15px 0; font-size: 1.1em; line-height: 1.6;"></p>
             <div class="action-btns" style="justify-content: center;">
                 <button class="btn-primary" onclick="alertComplete()">已完成</button>
                 <button class="btn-cancel" onclick="alertPostpone()">延期提醒</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认完成模态框 -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <p style="font-size: 1.2em; margin-bottom: 20px;">确认标记为“已完成”？</p>
+            <div class="action-btns" style="justify-content: center;">
+                <button class="btn-cancel" onclick="closeConfirmModal()">取消</button>
+                <button class="btn-primary" onclick="confirmComplete()">确认完成</button>
             </div>
         </div>
     </div>
@@ -102,40 +316,21 @@
         let schedules = [];
         let editingId = null;
         let alertingId = null;
-        let notifiedSet = new Set(); // 已通知过的日程ID
+        let currentStatusScheduleId = null; // 正在操作状态的日程ID
+        let pendingCompleteId = null;       // 等待确认完成的ID
+        let notifiedSet = new Set();
 
-        // 从localStorage加载已通知ID
         function loadNotifiedSet() {
             const raw = localStorage.getItem(NOTIFIED_KEY);
-            if (raw) {
-                try {
-                    const arr = JSON.parse(raw);
-                    notifiedSet = new Set(arr);
-                } catch (e) {
-                    notifiedSet = new Set();
-                }
-            } else {
-                notifiedSet = new Set();
-            }
+            notifiedSet = raw ? new Set(JSON.parse(raw)) : new Set();
         }
-
         function saveNotifiedSet() {
             localStorage.setItem(NOTIFIED_KEY, JSON.stringify([...notifiedSet]));
         }
-
         function loadData() {
             const raw = localStorage.getItem(STORAGE_KEY);
-            if (raw) {
-                try {
-                    schedules = JSON.parse(raw);
-                } catch (e) {
-                    schedules = [];
-                }
-            } else {
-                schedules = [];
-            }
+            schedules = raw ? JSON.parse(raw) : [];
         }
-
         function saveData() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(schedules));
         }
@@ -146,7 +341,6 @@
 
         // ---------- 时间工具 ----------
         function getNow() { return new Date(); }
-
         function formatDateTime(date) {
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -155,13 +349,10 @@
             const min = String(date.getMinutes()).padStart(2, '0');
             return `${y}-${m}-${d} ${h}:${min}:00`;
         }
-
         function getWeekdayCN(dateStr) {
             const days = ['日', '一', '二', '三', '四', '五', '六'];
-            const d = new Date(dateStr);
-            return '星期' + days[d.getDay()];
+            return '星期' + days[new Date(dateStr).getDay()];
         }
-
         function calcCountdown(deadlineStr, now) {
             const dl = new Date(deadlineStr);
             const diff = dl - now;
@@ -172,47 +363,39 @@
             const mins = Math.floor((totalSec % 3600) / 60);
             const secs = totalSec % 60;
             const parts = [];
-            if (days >= 3) { parts.push(`${days}天 ${String(hours).padStart(2,'0')}小时`); }
-            else if (days >= 1) { parts.push(`${days}天 ${String(hours).padStart(2,'0')}小时 ${String(mins).padStart(2,'0')}分钟`); }
+            if (days >= 3) { parts.push(`${days}天 ${String(hours).padStart(2,'0')}h`); }
+            else if (days >= 1) { parts.push(`${days}d ${String(hours).padStart(2,'0')}h ${String(mins).padStart(2,'0')}m`); }
             else {
-                if (hours > 0) parts.push(`${hours}小时`);
-                if (mins > 0 || hours > 0) parts.push(`${mins}分钟`);
-                parts.push(`${secs}秒`);
+                if (hours > 0) parts.push(`${hours}h`);
+                if (mins > 0 || hours > 0) parts.push(`${mins}m`);
+                parts.push(`${secs}s`);
             }
             return parts.join(' ');
         }
 
-        // ---------- 通知功能 ----------
+        // ---------- 系统通知 ----------
         function requestNotificationPermission() {
             if ('Notification' in window && Notification.permission === 'default') {
                 Notification.requestPermission();
             }
         }
-
         function showSystemNotification(schedule) {
             if ('Notification' in window && Notification.permission === 'granted') {
                 const body = `负责人：${schedule.responsible || '无'}\n落实人：${schedule.implementer || '无'}\n截止时间：${schedule.deadline}`;
-                const notification = new Notification('⏰ 日程提醒', {
+                new Notification('⏰ 日程提醒', {
                     body: body,
-                    icon: 'icon-192.png', // 如果有图标可显示
-                    tag: schedule.id, // 防止重复
-                    requireInteraction: true // 需要用户手动关闭（部分浏览器支持）
+                    icon: 'icon-192.png',
+                    tag: schedule.id,
+                    requireInteraction: true
                 });
-                notification.onclick = function() {
-                    // 点击通知打开App（因为PWA已安装，会聚焦到窗口）
-                    window.focus();
-                    notification.close();
-                };
             }
         }
 
         function checkAndNotifyExpired(schedule, now) {
-            // 仅当：未完成、已过期、且从未通知过
             if (!schedule.completed && new Date(schedule.deadline) <= now && !notifiedSet.has(schedule.id)) {
                 notifiedSet.add(schedule.id);
                 saveNotifiedSet();
                 showSystemNotification(schedule);
-                // 同时显示模态框提醒（如果当前页面可见）
                 if (document.visibilityState === 'visible') {
                     alertingId = schedule.id;
                     showAlert(schedule);
@@ -224,25 +407,18 @@
         function renderTable() {
             const now = getNow();
             document.getElementById('currentTime').textContent = `当前时间：${now.toLocaleString()}`;
-
             schedules.sort((a, b) => (a.deadline || '').localeCompare(b.deadline || ''));
 
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             let lastDate = '';
 
-            for (let i = 0; i < schedules.length; i++) {
-                const s = schedules[i];
+            for (const s of schedules) {
                 const deadline = s.deadline || '';
                 const datePart = deadline.slice(0, 10);
-
-                // 日期分隔行
                 if (datePart && datePart !== lastDate) {
                     const tr = document.createElement('tr');
-                    tr.className = 'date-separator';
-                    const d = new Date(datePart);
-                    const display = `${d.getFullYear()}年${String(d.getMonth()+1).padStart(2,'0')}月${String(d.getDate()).padStart(2,'0')}日 ${getWeekdayCN(datePart)}`;
-                    tr.innerHTML = `<td colspan="6"><span class="date-text">${display}</span></td>`;
+                    tr.innerHTML = `<td colspan="6" class="date-separator"><span class="date-text">${datePart} ${getWeekdayCN(datePart)}</span></td>`;
                     tbody.appendChild(tr);
                 }
                 lastDate = datePart;
@@ -259,7 +435,6 @@
                         status = '已完成';
                         countdown = '计时结束';
                         rowClass = 'row-completed';
-                        // 检查是否需要通知
                         checkAndNotifyExpired(s, now);
                     } else {
                         const diffHours = (dl - now) / 3600000;
@@ -275,13 +450,12 @@
                     <td>${s.thing || ''}</td>
                     <td>${s.responsible || ''}</td>
                     <td>${s.implementer || ''}</td>
-                    <td>${deadline}</td>
+                    <td><div class="deadline-cell"><span>${deadline.slice(0,10)}</span><span>${deadline.slice(11)}</span></div></td>
                     <td>${countdown}</td>
                     <td>
-                        <span style="display:block; margin-bottom:4px;">${status}</span>
                         <div class="btn-group">
-                            ${!isCompleted ? `<button onclick="markComplete('${s.id}')">完成</button>` : `<button onclick="markInProgress('${s.id}')">进行中</button>`}
                             <button onclick="openEditModal('${s.id}')">修改</button>
+                            <button onclick="openStatusModal('${s.id}')">状态</button>
                             <button class="btn-danger" onclick="deleteSchedule('${s.id}')">删除</button>
                         </div>
                     </td>
@@ -296,26 +470,15 @@
                 <strong>事项：</strong>${s.thing}<br>
                 <strong>负责人：</strong>${s.responsible}<br>
                 <strong>落实人：</strong>${s.implementer}<br>
-                <strong>截止时间：</strong>${s.deadline}<br><br>
-                ⏰ 时间已到，请确认状态
+                <strong>截止时间：</strong>${s.deadline}<br><br>⏰ 时间已到，请确认状态
             `;
             document.getElementById('alertModal').style.display = 'flex';
         }
-
         function alertComplete() {
-            if (alertingId) {
-                const s = schedules.find(item => item.id === alertingId);
-                if (s) {
-                    s.completed = true;
-                    notifiedSet.delete(alertingId);
-                    saveNotifiedSet();
-                    saveData();
-                }
-                document.getElementById('alertModal').style.display = 'none';
-                alertingId = null;
-            }
+            if (alertingId) markComplete(alertingId);
+            document.getElementById('alertModal').style.display = 'none';
+            alertingId = null;
         }
-
         function alertPostpone() {
             if (alertingId) {
                 document.getElementById('alertModal').style.display = 'none';
@@ -324,18 +487,112 @@
             }
         }
 
-        // ---------- 模态框操作 ----------
-        function openAddModal() {
-            editingId = null;
-            document.getElementById('modalTitle').textContent = '添加日程';
-            document.getElementById('thing').value = '';
-            document.getElementById('responsible').value = '';
-            document.getElementById('implementer').value = '';
-            setNowTime();
-            document.getElementById('errorMsg').textContent = '';
-            document.getElementById('editModal').style.display = 'flex';
+        // ---------- 状态模态框 ----------
+        function openStatusModal(id) {
+            currentStatusScheduleId = id;
+            const s = schedules.find(item => item.id === id);
+            const optionsDiv = document.getElementById('statusOptions');
+            optionsDiv.innerHTML = '';
+
+            if (s.completed) {
+                // 已完成状态：可以选择“已完成”（不可再选）和“延期提醒”
+                const doneBtn = document.createElement('button');
+                doneBtn.textContent = '已完成';
+                doneBtn.disabled = true;
+                doneBtn.style.background = '#ccc';
+                optionsDiv.appendChild(doneBtn);
+
+                const postponeBtn = document.createElement('button');
+                postponeBtn.textContent = '延期提醒';
+                postponeBtn.onclick = () => {
+                    closeStatusModal();
+                    openEditModal(id);
+                };
+                optionsDiv.appendChild(postponeBtn);
+            } else {
+                // 未完成状态：已完成、加油干！、进行中
+                const completeBtn = document.createElement('button');
+                completeBtn.textContent = '已完成';
+                completeBtn.onclick = () => {
+                    closeStatusModal();
+                    openConfirmModal(id);
+                };
+                optionsDiv.appendChild(completeBtn);
+
+                const urgentBtn = document.createElement('button');
+                urgentBtn.textContent = '加油干！';
+                urgentBtn.onclick = () => {
+                    // 加油干本质上就是进行中且时间不足2小时的状态，我们手动设为进行中（因为颜色由倒计时决定）
+                    const sch = schedules.find(item => item.id === id);
+                    if (sch) {
+                        sch.completed = false;
+                        notifiedSet.delete(id);
+                        saveNotifiedSet();
+                        saveData();
+                    }
+                    closeStatusModal();
+                };
+                optionsDiv.appendChild(urgentBtn);
+
+                const progressBtn = document.createElement('button');
+                progressBtn.textContent = '进行中';
+                progressBtn.onclick = () => {
+                    const sch = schedules.find(item => item.id === id);
+                    if (sch) {
+                        sch.completed = false;
+                        notifiedSet.delete(id);
+                        saveNotifiedSet();
+                        saveData();
+                    }
+                    closeStatusModal();
+                };
+                optionsDiv.appendChild(progressBtn);
+            }
+
+            document.getElementById('statusModal').style.display = 'flex';
         }
 
+        function closeStatusModal() {
+            document.getElementById('statusModal').style.display = 'none';
+            currentStatusScheduleId = null;
+        }
+
+        // ---------- 确认完成模态框 ----------
+        function openConfirmModal(id) {
+            pendingCompleteId = id;
+            document.getElementById('confirmModal').style.display = 'flex';
+        }
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+            pendingCompleteId = null;
+        }
+        function confirmComplete() {
+            if (pendingCompleteId) {
+                markComplete(pendingCompleteId);
+            }
+            closeConfirmModal();
+        }
+
+        // ---------- 数据操作 ----------
+        function markComplete(id) {
+            const s = schedules.find(item => item.id === id);
+            if (s) {
+                s.completed = true;
+                notifiedSet.delete(id);
+                saveNotifiedSet();
+                saveData();
+            }
+        }
+
+        function deleteSchedule(id) {
+            if (confirm('确定删除此日程吗？')) {
+                schedules = schedules.filter(item => item.id !== id);
+                notifiedSet.delete(id);
+                saveNotifiedSet();
+            }
+        }
+
+        // ---------- 修改日程 ----------
         function openEditModal(id) {
             const s = schedules.find(item => item.id === id);
             if (!s) return;
@@ -350,6 +607,17 @@
             document.getElementById('day').value = String(dt.getDate()).padStart(2, '0');
             document.getElementById('hour').value = String(dt.getHours()).padStart(2, '0');
             document.getElementById('minute').value = String(dt.getMinutes()).padStart(2, '0');
+            document.getElementById('errorMsg').textContent = '';
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function openAddModal() {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = '添加日程';
+            document.getElementById('thing').value = '';
+            document.getElementById('responsible').value = '';
+            document.getElementById('implementer').value = '';
+            setNowTime();
             document.getElementById('errorMsg').textContent = '';
             document.getElementById('editModal').style.display = 'flex';
         }
@@ -382,7 +650,6 @@
             document.getElementById('minute').value = String(dt.getMinutes()).padStart(2, '0');
         }
 
-        // ---------- 数据操作 ----------
         function saveSchedule() {
             const thing = document.getElementById('thing').value.trim();
             const resp = document.getElementById('responsible').value.trim();
@@ -408,76 +675,40 @@
                 if (s) {
                     s.deadline = deadlineStr;
                     s.completed = false;
-                    // 修改后允许再次通知
                     notifiedSet.delete(editingId);
                     saveNotifiedSet();
                 }
             } else {
-                const newSchedule = {
+                schedules.push({
                     id: generateId(),
                     thing,
                     responsible: resp,
                     implementer: impl,
                     deadline: deadlineStr,
                     completed: false
-                };
-                schedules.push(newSchedule);
+                });
             }
             saveData();
             closeModal();
-        }
-
-        function markComplete(id) {
-            const s = schedules.find(item => item.id === id);
-            if (s) {
-                s.completed = true;
-                notifiedSet.delete(id);
-                saveNotifiedSet();
-                saveData();
-            }
-        }
-
-        function markInProgress(id) {
-            const s = schedules.find(item => item.id === id);
-            if (s) {
-                s.completed = false;
-                notifiedSet.delete(id); // 重置通知状态
-                saveNotifiedSet();
-                saveData();
-            }
-        }
-
-        function deleteSchedule(id) {
-            if (confirm('确定删除此日程吗？')) {
-                schedules = schedules.filter(item => item.id !== id);
-                notifiedSet.delete(id);
-                saveNotifiedSet();
-                saveData();
-            }
         }
 
         // ---------- 初始化 ----------
         function init() {
             loadData();
             loadNotifiedSet();
-            requestNotificationPermission(); // 询问是否允许通知
+            requestNotificationPermission();
             renderTable();
             setInterval(renderTable, 1000);
-
-            // 关闭所有模态框（点击空白处关闭）
             window.onclick = function(event) {
-                if (event.target.className === 'modal') {
+                if (event.target.classList.contains('modal')) {
                     event.target.style.display = 'none';
                 }
             };
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js');
+            }
         }
-
         init();
-
-        // 注册 Service Worker（用于离线缓存和未来的推送）
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW注册失败', err));
-        }
     </script>
 </body>
 </html>
