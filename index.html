@@ -89,20 +89,35 @@
             vertical-align: middle;
         }
 
-        /* 固定字符宽度的列 */
-        th:nth-child(1) { width: 5em; }   /* 事项 5个汉字宽度 */
-        th:nth-child(2) { width: 3em; }   /* 负责人 3个汉字 */
-        th:nth-child(3) { width: 3em; }   /* 落实人 3个汉字 */
-        th:nth-child(4) { width: 10ch; }  /* 截止时间 10个字符(YYYY-MM-DD) */
-        th:nth-child(5) { width: 3em; }   /* 倒计时 3个汉字宽度 */
-        th:nth-child(6) { width: 3em; }   /* 操作 3个汉字宽度 */
+        /* 列宽 */
+        th:nth-child(1) { width: 5em; }
+        th:nth-child(2) { width: 3em; }
+        th:nth-child(3) { width: 3em; }
+        th:nth-child(4) { width: 10ch; }
+        th:nth-child(5) { width: 3.5em; }
+        th:nth-child(6) { width: 3em; }
 
-        /* 截止时间内部换行：日期和时分分开 */
         .deadline-cell {
             display: flex;
             flex-direction: column;
             align-items: center;
-            line-height: 1.3;
+            line-height: 1.4;
+        }
+        .deadline-date { font-weight: bold; }
+        .deadline-status {
+            margin-top: 0.5em;
+            font-weight: bold;
+        }
+        .status-normal { color: black; }
+        .status-urgent { color: orange; }
+        .status-critical { color: red; }
+        .status-completed { color: #8eb47e; }
+
+        .countdown-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1.4;
         }
 
         .date-separator td {
@@ -117,10 +132,7 @@
             border-radius: 4px;
             display: inline-block;
             font-weight: bold;
-            font-size: inherit;
         }
-        .row-completed td { color: #8eb47e; }
-        .row-urgent td { color: #d04040; }
 
         .btn-group {
             display: flex;
@@ -139,7 +151,6 @@
         }
         .btn-group .btn-danger { background: #ffcccc; }
 
-        /* 模态框 */
         .modal {
             display: none;
             position: fixed;
@@ -174,6 +185,11 @@
             gap: 4px;
             align-items: center;
             flex-wrap: wrap;
+        }
+        .time-row .input-group {
+            display: flex;
+            align-items: center;
+            gap: 2px;
         }
         .time-row input { width: 55px; text-align: center; }
         .quick-btns {
@@ -254,11 +270,26 @@
             <input type="text" id="responsible" placeholder="负责人">
             <input type="text" id="implementer" placeholder="落实人">
             <div class="time-row">
-                <input type="number" id="year" placeholder="年" min="2024" max="2099">
-                <input type="number" id="month" placeholder="月" min="1" max="12">
-                <input type="number" id="day" placeholder="日" min="1" max="31">
-                <input type="number" id="hour" placeholder="时" min="0" max="23">
-                <input type="number" id="minute" placeholder="分" min="0" max="59">
+                <div class="input-group">
+                    <input type="number" id="year" placeholder="年" min="2024" max="2099">
+                    <span>年</span>
+                </div>
+                <div class="input-group">
+                    <input type="number" id="month" placeholder="月" min="1" max="12">
+                    <span>月</span>
+                </div>
+                <div class="input-group">
+                    <input type="number" id="day" placeholder="日" min="1" max="31">
+                    <span>日</span>
+                </div>
+                <div class="input-group">
+                    <input type="number" id="hour" placeholder="时" min="0" max="23">
+                    <span>时</span>
+                </div>
+                <div class="input-group">
+                    <input type="number" id="minute" placeholder="分" min="0" max="59">
+                    <span>分</span>
+                </div>
             </div>
             <div class="quick-btns">
                 <button onclick="quickAdd(15)">15分钟后</button>
@@ -316,8 +347,8 @@
         let schedules = [];
         let editingId = null;
         let alertingId = null;
-        let currentStatusScheduleId = null; // 正在操作状态的日程ID
-        let pendingCompleteId = null;       // 等待确认完成的ID
+        let currentStatusScheduleId = null;
+        let pendingCompleteId = null;
         let notifiedSet = new Set();
 
         function loadNotifiedSet() {
@@ -353,24 +384,52 @@
             const days = ['日', '一', '二', '三', '四', '五', '六'];
             return '星期' + days[new Date(dateStr).getDay()];
         }
-        function calcCountdown(deadlineStr, now) {
+        function getRemainSeconds(deadlineStr) {
             const dl = new Date(deadlineStr);
-            const diff = dl - now;
-            if (diff <= 0) return '计时结束';
-            const totalSec = Math.floor(diff / 1000);
+            const now = getNow();
+            return Math.floor((dl - now) / 1000);
+        }
+
+        // 返回 [days, hours, mins, secs]
+        function getCountdownParts(deadlineStr) {
+            let totalSec = getRemainSeconds(deadlineStr);
+            if (totalSec < 0) totalSec = 0;
             const days = Math.floor(totalSec / 86400);
             const hours = Math.floor((totalSec % 86400) / 3600);
             const mins = Math.floor((totalSec % 3600) / 60);
             const secs = totalSec % 60;
-            const parts = [];
-            if (days >= 3) { parts.push(`${days}天 ${String(hours).padStart(2,'0')}h`); }
-            else if (days >= 1) { parts.push(`${days}d ${String(hours).padStart(2,'0')}h ${String(mins).padStart(2,'0')}m`); }
-            else {
-                if (hours > 0) parts.push(`${hours}h`);
-                if (mins > 0 || hours > 0) parts.push(`${mins}m`);
-                parts.push(`${secs}s`);
+            return [days, hours, mins, secs];
+        }
+
+        function getStatusInfo(schedule) {
+            if (schedule.completed) {
+                return { text: '已完成', class: 'status-completed' };
             }
-            return parts.join(' ');
+            const totalSec = getRemainSeconds(schedule.deadline);
+            if (totalSec <= 0) return { text: '已完成', class: 'status-completed' };
+            const hours = totalSec / 3600;
+            if (hours > 3) {
+                return { text: '进行中', class: 'status-normal' };
+            } else if (hours > 1) {
+                return { text: '加油干！', class: 'status-urgent' };
+            } else {
+                return { text: '时间快到了', class: 'status-critical' };
+            }
+        }
+
+        function calcCountdownDisplay(deadlineStr) {
+            const [days, hours, mins, secs] = getCountdownParts(deadlineStr);
+            const parts = [];
+            if (days >= 3) {
+                parts.push(`${days}天`, `${hours}小时`);
+            } else if (days >= 1) {
+                parts.push(`${days}天`, `${hours}小时`, `${mins}分钟`);
+            } else {
+                if (hours > 0) parts.push(`${hours}小时`);
+                if (mins > 0 || hours > 0) parts.push(`${mins}分钟`);
+                parts.push(`${secs}秒`);
+            }
+            return parts;
         }
 
         // ---------- 系统通知 ----------
@@ -391,8 +450,8 @@
             }
         }
 
-        function checkAndNotifyExpired(schedule, now) {
-            if (!schedule.completed && new Date(schedule.deadline) <= now && !notifiedSet.has(schedule.id)) {
+        function checkAndNotifyExpired(schedule) {
+            if (!schedule.completed && getRemainSeconds(schedule.deadline) <= 0 && !notifiedSet.has(schedule.id)) {
                 notifiedSet.add(schedule.id);
                 saveNotifiedSet();
                 showSystemNotification(schedule);
@@ -423,45 +482,56 @@
                 }
                 lastDate = datePart;
 
-                let status = '', countdown = '', rowClass = '';
-                const isCompleted = s.completed || false;
-                if (isCompleted) {
-                    status = '已完成';
-                    countdown = s.completed_countdown || '';
-                    rowClass = 'row-completed';
-                } else if (deadline) {
-                    const dl = new Date(deadline);
-                    if (dl <= now) {
-                        status = '已完成';
-                        countdown = '计时结束';
-                        rowClass = 'row-completed';
-                        checkAndNotifyExpired(s, now);
-                    } else {
-                        const diffHours = (dl - now) / 3600000;
-                        status = diffHours <= 2 ? '加油干！' : '进行中';
-                        countdown = calcCountdown(deadline, now);
-                        rowClass = diffHours <= 2 ? 'row-urgent' : '';
-                    }
-                }
+                checkAndNotifyExpired(s);
+
+                const statusInfo = getStatusInfo(s);
+                const countdownParts = s.completed ? [] : calcCountdownDisplay(deadline);
 
                 const tr = document.createElement('tr');
-                tr.className = rowClass;
-                tr.innerHTML = `
-                    <td>${s.thing || ''}</td>
-                    <td>${s.responsible || ''}</td>
-                    <td>${s.implementer || ''}</td>
-                    <td><div class="deadline-cell"><span>${deadline.slice(0,10)}</span><span>${deadline.slice(11)}</span></div></td>
-                    <td>${countdown}</td>
-                    <td>
-                        <div class="btn-group">
-                            <button onclick="openEditModal('${s.id}')">修改</button>
-                            <button onclick="openStatusModal('${s.id}')">状态</button>
-                            <button class="btn-danger" onclick="deleteSchedule('${s.id}')">删除</button>
-                        </div>
-                    </td>
+
+                // 截止时间列内容
+                const deadlineCell = document.createElement('td');
+                deadlineCell.innerHTML = `
+                    <div class="deadline-cell">
+                        <span class="deadline-date">${deadline.slice(0,10)}</span>
+                        <span>${deadline.slice(11)}</span>
+                        <span class="deadline-status ${statusInfo.class}">${statusInfo.text}</span>
+                    </div>
                 `;
+
+                // 倒计时列
+                const countdownCell = document.createElement('td');
+                if (countdownParts.length > 0) {
+                    const partsHtml = countdownParts.map(p => `<span>${p}</span>`).join('');
+                    countdownCell.innerHTML = `<div class="countdown-cell">${partsHtml}</div>`;
+                } else {
+                    countdownCell.textContent = '';
+                }
+
+                // 操作列
+                const actionCell = document.createElement('td');
+                actionCell.innerHTML = `
+                    <div class="btn-group">
+                        <button onclick="openEditModal('${s.id}')">修改</button>
+                        <button onclick="openStatusModal('${s.id}')">状态</button>
+                        <button class="btn-danger" onclick="deleteSchedule('${s.id}')">删除</button>
+                    </div>
+                `;
+
+                tr.appendChild(createCell(s.thing));
+                tr.appendChild(createCell(s.responsible));
+                tr.appendChild(createCell(s.implementer));
+                tr.appendChild(deadlineCell);
+                tr.appendChild(countdownCell);
+                tr.appendChild(actionCell);
                 tbody.appendChild(tr);
             }
+        }
+
+        function createCell(text) {
+            const td = document.createElement('td');
+            td.textContent = text || '';
+            return td;
         }
 
         // ---------- 提醒弹窗 ----------
@@ -495,7 +565,6 @@
             optionsDiv.innerHTML = '';
 
             if (s.completed) {
-                // 已完成状态：可以选择“已完成”（不可再选）和“延期提醒”
                 const doneBtn = document.createElement('button');
                 doneBtn.textContent = '已完成';
                 doneBtn.disabled = true;
@@ -510,7 +579,6 @@
                 };
                 optionsDiv.appendChild(postponeBtn);
             } else {
-                // 未完成状态：已完成、加油干！、进行中
                 const completeBtn = document.createElement('button');
                 completeBtn.textContent = '已完成';
                 completeBtn.onclick = () => {
@@ -518,21 +586,6 @@
                     openConfirmModal(id);
                 };
                 optionsDiv.appendChild(completeBtn);
-
-                const urgentBtn = document.createElement('button');
-                urgentBtn.textContent = '加油干！';
-                urgentBtn.onclick = () => {
-                    // 加油干本质上就是进行中且时间不足2小时的状态，我们手动设为进行中（因为颜色由倒计时决定）
-                    const sch = schedules.find(item => item.id === id);
-                    if (sch) {
-                        sch.completed = false;
-                        notifiedSet.delete(id);
-                        saveNotifiedSet();
-                        saveData();
-                    }
-                    closeStatusModal();
-                };
-                optionsDiv.appendChild(urgentBtn);
 
                 const progressBtn = document.createElement('button');
                 progressBtn.textContent = '进行中';
@@ -589,10 +642,11 @@
                 schedules = schedules.filter(item => item.id !== id);
                 notifiedSet.delete(id);
                 saveNotifiedSet();
+                saveData();
             }
         }
 
-        // ---------- 修改日程 ----------
+        // ---------- 修改/添加 ----------
         function openEditModal(id) {
             const s = schedules.find(item => item.id === id);
             if (!s) return;
