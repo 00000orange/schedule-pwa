@@ -1,0 +1,2 @@
+# schedule-pwa
+yes
