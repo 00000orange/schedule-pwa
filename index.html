@@ -27,8 +27,9 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Microsoft YaHei', sans-serif; }
         body {
-            background: #f5f5f5; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
-            font-size: var(--base-font-size); -webkit-overflow-scrolling: touch;
+            background: #f5f5f5; display: flex; flex-direction: column;
+            height: 100vh; overflow: hidden; font-size: var(--base-font-size);
+            -webkit-overflow-scrolling: touch;
         }
         .header {
             background: #2E54A1; color: #FFF2BD; padding: 0 12px;
@@ -44,12 +45,13 @@
         }
         .header button {
             background: #FFF2BD; border: none; width: 36px; height: 36px; border-radius: 10px;
-            font-weight: bold; cursor: pointer; font-size: 1.1em; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; cursor: pointer; font-size: 1.1em;
+            display: flex; align-items: center; justify-content: center;
         }
         .current-time {
             background: #e9ecef; padding: 0 15px; font-size: 0.85em; text-align: center;
-            border-bottom: 1px solid #ccc; height: var(--time-bar-height); line-height: var(--time-bar-height);
-            position: relative; flex-shrink: 0;
+            border-bottom: 1px solid #ccc; height: var(--time-bar-height);
+            line-height: var(--time-bar-height); position: relative; flex-shrink: 0;
         }
         .watermark {
             position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
@@ -57,17 +59,10 @@
         }
         .table-container {
             flex: 1; overflow-y: auto; padding: 8px 8px 70px 8px;
-            -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y;
-            position: relative;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            touch-action: pan-y;
         }
-        .pull-to-refresh {
-            position: absolute; top: -60px; left: 0; right: 0; height: 60px;
-            display: flex; align-items: center; justify-content: center;
-            background: #f0f0f0; color: #666; font-size: 14px; z-index: 10;
-            transition: top 0.3s; pointer-events: none;
-        }
-        .pull-to-refresh.active { top: 0; }
-
         table {
             width: 100%; table-layout: fixed; border-collapse: collapse;
             background: white; font-size: var(--base-font-size);
@@ -179,7 +174,6 @@
         <span class="watermark">DESIGNED BY CDH</span>
     </div>
     <div class="table-container" id="tableContainer">
-        <div class="pull-to-refresh" id="pullToRefresh">↓ 下拉刷新</div>
         <table id="scheduleTable">
             <thead>
                 <tr><th>事项</th><th>负责人</th><th>落实人</th><th>截止时间</th><th>倒计时</th><th>操作</th></tr>
@@ -289,7 +283,6 @@
     <script>
         emailjs.init('');
 
-        // ---------- 数据存储 ----------
         const STORAGE_KEY = 'schedules_data';
         const NOTIFIED_KEY = 'notified_schedule_ids';
         const EMAIL_REMINDER_KEY = 'email_reminders_sent';
@@ -305,7 +298,7 @@
         let pastTimePending = null;
         let autoScrollTimer = null;
 
-        // 持久化加载
+        // ---------- 数据加载/保存 ----------
         function loadEmailReminders() {
             const raw = localStorage.getItem(EMAIL_REMINDER_KEY);
             emailReminders = raw ? JSON.parse(raw) : {};
@@ -367,7 +360,6 @@
             }).catch(err => console.warn('邮件发送失败:', err));
         }
 
-        // ---------- 工具函数 ----------
         function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,5); }
         function getNow() { return new Date(); }
         function formatDateTime(date) {
@@ -393,7 +385,6 @@
             saveEmailReminders();
         }
 
-        // ---------- 邮件提醒检查 ----------
         function checkEmailReminders(schedule, now) {
             if (!canSendEmail() || schedule.completed) return;
             const deadline = new Date(schedule.deadline);
@@ -420,7 +411,6 @@
             }
         }
 
-        // ---------- 系统通知 ----------
         function requestNotificationPermission() {
             if ('Notification' in window && Notification.permission === 'default') {
                 Notification.requestPermission();
@@ -443,7 +433,7 @@
             }
         }
 
-        // ---------- 自动滚动 ----------
+        // ---------- 自动滚动至今天 ----------
         function resetAutoScroll() {
             if (autoScrollTimer) clearTimeout(autoScrollTimer);
             autoScrollTimer = setTimeout(() => {
@@ -464,7 +454,7 @@
             }
         }
 
-        // ---------- 渲染表格 ----------
+        // ---------- 表格渲染 ----------
         function renderTable() {
             const now = getNow();
             document.getElementById('currentTime').innerHTML = `当前时间：${now.toLocaleString()} <span class="watermark">DESIGNED BY CDH</span>`;
@@ -538,7 +528,7 @@
             resetAutoScroll();
         }
 
-        // ---------- 状态模态框 ----------
+        // ---------- 状态相关 ----------
         function openStatusModal(id) {
             currentStatusScheduleId = id;
             const s = schedules.find(i => i.id === id);
@@ -581,46 +571,80 @@
         }
         function closeStatusModal() { document.getElementById('statusModal').style.display = 'none'; }
 
-        function openConfirmModal(id) { pendingCompleteId = id; document.getElementById('confirmModal').style.display = 'flex'; }
-        function closeConfirmModal() { pendingCompleteId = null; document.getElementById('confirmModal').style.display = 'none'; }
+        function openConfirmModal(id) {
+            pendingCompleteId = id;
+            document.getElementById('confirmModal').style.display = 'flex';
+        }
+        function closeConfirmModal() {
+            pendingCompleteId = null;
+            document.getElementById('confirmModal').style.display = 'none';
+        }
         function confirmComplete() {
             if (pendingCompleteId) {
                 const s = schedules.find(i => i.id === pendingCompleteId);
-                if (s) { s.completed = true; s.completed_countdown = ''; notifiedSet.delete(pendingCompleteId); saveNotifiedSet(); saveData(); resetEmailRemindersForSchedule(pendingCompleteId); }
+                if (s) {
+                    s.completed = true;
+                    s.completed_countdown = '';
+                    notifiedSet.delete(pendingCompleteId);
+                    saveNotifiedSet();
+                    saveData();
+                    resetEmailRemindersForSchedule(pendingCompleteId);
+                }
             }
             closeConfirmModal();
         }
 
         function alertComplete() {
-            if (alertingId) { const s = schedules.find(i => i.id === alertingId); if (s) { s.completed = true; saveData(); resetEmailRemindersForSchedule(alertingId); } }
+            if (alertingId) {
+                const s = schedules.find(i => i.id === alertingId);
+                if (s) { s.completed = true; saveData(); resetEmailRemindersForSchedule(alertingId); }
+            }
             document.getElementById('alertModal').style.display = 'none';
             alertingId = null;
         }
         function alertPostpone() {
-            if (alertingId) { document.getElementById('alertModal').style.display = 'none'; openEditModal(alertingId); alertingId = null; }
+            if (alertingId) {
+                document.getElementById('alertModal').style.display = 'none';
+                openEditModal(alertingId);
+                alertingId = null;
+            }
         }
 
-        // ---------- 添加/修改 ----------
+        // ---------- 添加/修改日程 ----------
         function openAddModal() {
-            editingId = null; document.getElementById('modalTitle').textContent = '添加日程';
-            document.getElementById('thing').value = ''; document.getElementById('responsible').value = ''; document.getElementById('implementer').value = '';
-            setNowTime(); document.getElementById('errorMsg').textContent = ''; document.getElementById('editModal').style.display = 'flex';
+            editingId = null;
+            document.getElementById('modalTitle').textContent = '添加日程';
+            document.getElementById('thing').value = '';
+            document.getElementById('responsible').value = '';
+            document.getElementById('implementer').value = '';
+            setNowTime();
+            document.getElementById('errorMsg').textContent = '';
+            document.getElementById('editModal').style.display = 'flex';
         }
         function openEditModal(id) {
-            const s = schedules.find(i => i.id === id); if (!s) return;
-            editingId = id; document.getElementById('modalTitle').textContent = '修改截止时间';
-            document.getElementById('thing').value = s.thing || ''; document.getElementById('responsible').value = s.responsible || ''; document.getElementById('implementer').value = s.implementer || '';
+            const s = schedules.find(i => i.id === id);
+            if (!s) return;
+            editingId = id;
+            document.getElementById('modalTitle').textContent = '修改截止时间';
+            document.getElementById('thing').value = s.thing || '';
+            document.getElementById('responsible').value = s.responsible || '';
+            document.getElementById('implementer').value = s.implementer || '';
             const dt = new Date(s.deadline);
-            document.getElementById('year').value = dt.getFullYear(); document.getElementById('month').value = String(dt.getMonth()+1).padStart(2,'0');
-            document.getElementById('day').value = String(dt.getDate()).padStart(2,'0'); document.getElementById('hour').value = String(dt.getHours()).padStart(2,'0');
+            document.getElementById('year').value = dt.getFullYear();
+            document.getElementById('month').value = String(dt.getMonth()+1).padStart(2,'0');
+            document.getElementById('day').value = String(dt.getDate()).padStart(2,'0');
+            document.getElementById('hour').value = String(dt.getHours()).padStart(2,'0');
             document.getElementById('minute').value = String(dt.getMinutes()).padStart(2,'0');
-            document.getElementById('errorMsg').textContent = ''; document.getElementById('editModal').style.display = 'flex';
+            document.getElementById('errorMsg').textContent = '';
+            document.getElementById('editModal').style.display = 'flex';
         }
         function closeModal() { document.getElementById('editModal').style.display = 'none'; }
         function setNowTime() {
             const now = getNow();
-            document.getElementById('year').value = now.getFullYear(); document.getElementById('month').value = String(now.getMonth()+1).padStart(2,'0');
-            document.getElementById('day').value = String(now.getDate()).padStart(2,'0'); document.getElementById('hour').value = String(now.getHours()).padStart(2,'0');
+            document.getElementById('year').value = now.getFullYear();
+            document.getElementById('month').value = String(now.getMonth()+1).padStart(2,'0');
+            document.getElementById('day').value = String(now.getDate()).padStart(2,'0');
+            document.getElementById('hour').value = String(now.getHours()).padStart(2,'0');
             document.getElementById('minute').value = String(now.getMinutes()).padStart(2,'0');
         }
         function quickAdd(seconds) {
@@ -628,11 +652,15 @@
                   d=parseInt(document.getElementById('day').value), h=parseInt(document.getElementById('hour').value),
                   mi=parseInt(document.getElementById('minute').value);
             if (isNaN(y)||isNaN(mo)||isNaN(d)||isNaN(h)||isNaN(mi)) return;
-            const dt = new Date(y,mo-1,d,h,mi); dt.setTime(dt.getTime() + seconds*1000);
-            document.getElementById('year').value = dt.getFullYear(); document.getElementById('month').value = String(dt.getMonth()+1).padStart(2,'0');
-            document.getElementById('day').value = String(dt.getDate()).padStart(2,'0'); document.getElementById('hour').value = String(dt.getHours()).padStart(2,'0');
+            const dt = new Date(y,mo-1,d,h,mi);
+            dt.setTime(dt.getTime() + seconds*1000);
+            document.getElementById('year').value = dt.getFullYear();
+            document.getElementById('month').value = String(dt.getMonth()+1).padStart(2,'0');
+            document.getElementById('day').value = String(dt.getDate()).padStart(2,'0');
+            document.getElementById('hour').value = String(dt.getHours()).padStart(2,'0');
             document.getElementById('minute').value = String(dt.getMinutes()).padStart(2,'0');
         }
+
         function saveSchedule() {
             const thing = document.getElementById('thing').value.trim();
             const resp = document.getElementById('responsible').value.trim();
@@ -650,7 +678,11 @@
             }
             finalizeSchedule(thing, resp, impl, y, mo, d, h, mi);
         }
-        function closePastTimeModal() { document.getElementById('pastTimeModal').style.display = 'none'; pastTimePending = null; }
+
+        function closePastTimeModal() {
+            document.getElementById('pastTimeModal').style.display = 'none';
+            pastTimePending = null;
+        }
         function confirmPastTime() {
             if (!pastTimePending) return;
             const { year, month, day, hour, minute, thing, resp, impl, isEditing } = pastTimePending;
@@ -661,9 +693,12 @@
             } else {
                 schedules.push({ id: generateId(), thing, responsible: resp, implementer: impl, deadline: deadlineStr, completed: true });
             }
-            saveData(); closeModal();
-            document.getElementById('pastTimeModal').style.display = 'none'; pastTimePending = null;
+            saveData();
+            closeModal();
+            document.getElementById('pastTimeModal').style.display = 'none';
+            pastTimePending = null;
         }
+
         function finalizeSchedule(thing, resp, impl, y, mo, d, h, mi) {
             const deadlineStr = formatDateTime(new Date(y, mo-1, d, h, mi));
             if (editingId) {
@@ -672,12 +707,16 @@
             } else {
                 schedules.push({ id: generateId(), thing, responsible: resp, implementer: impl, deadline: deadlineStr, completed: false });
             }
-            saveData(); closeModal();
+            saveData();
+            closeModal();
         }
+
         function deleteSchedule(id) {
             if (confirm('确定删除此日程吗？')) {
                 schedules = schedules.filter(i => i.id !== id);
-                notifiedSet.delete(id); saveNotifiedSet(); resetEmailRemindersForSchedule(id); saveData();
+                notifiedSet.delete(id); saveNotifiedSet();
+                resetEmailRemindersForSchedule(id);
+                saveData();
             }
         }
 
@@ -689,68 +728,12 @@
             const serviceId = document.getElementById('emailServiceId').value.trim();
             const templateId = document.getElementById('emailTemplateId').value.trim();
             const to = document.getElementById('emailTo').value.trim();
-            if (enabled && (!publicKey || !serviceId || !templateId || !to)) { alert('请填写完整的邮件配置，或关闭邮件开关'); return; }
+            if (enabled && (!publicKey || !serviceId || !templateId || !to)) {
+                alert('请填写完整的邮件配置，或关闭邮件开关');
+                return;
+            }
             saveEmailSettingsToStorage();
             document.getElementById('settingsModal').style.display = 'none';
-        }
-
-        // ---------- 下拉刷新 ----------
-        const tableContainer = document.getElementById('tableContainer');
-        const pullToRefresh = document.getElementById('pullToRefresh');
-        let pullStartY = 0;
-        let pulling = false;
-        tableContainer.addEventListener('touchstart', (e) => {
-            if (tableContainer.scrollTop === 0) {
-                pullStartY = e.touches[0].clientY;
-                pulling = true;
-            }
-        });
-        tableContainer.addEventListener('touchmove', (e) => {
-            if (pulling) {
-                const currentY = e.touches[0].clientY;
-                const distance = currentY - pullStartY;
-                if (distance > 30) {
-                    pullToRefresh.classList.add('active');
-                    pullToRefresh.textContent = '释放刷新';
-                } else {
-                    pullToRefresh.classList.remove('active');
-                    pullToRefresh.textContent = '↓ 下拉刷新';
-                }
-            }
-        });
-        tableContainer.addEventListener('touchend', () => {
-            if (pulling && pullToRefresh.classList.contains('active')) {
-                loadData();
-                renderTable();
-                pullToRefresh.textContent = '刷新中...';
-                setTimeout(() => {
-                    pullToRefresh.classList.remove('active');
-                    pullToRefresh.textContent = '↓ 下拉刷新';
-                }, 500);
-            }
-            pulling = false;
-            pullStartY = 0;
-        });
-
-        // ---------- Service Worker 自动更新 ----------
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').then(reg => {
-                reg.onupdatefound = () => {
-                    const newWorker = reg.installing;
-                    newWorker.onstatechange = () => {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            if (confirm('有新版本可用，点击确定更新')) {
-                                newWorker.postMessage({ action: 'skipWaiting' });
-                                window.location.reload();
-                            }
-                        }
-                    };
-                };
-            }).catch(err => console.log('SW注册失败', err));
-            let refreshing = false;
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-                if (!refreshing) { refreshing = true; window.location.reload(); }
-            });
         }
 
         // ---------- 初始化 ----------
@@ -763,9 +746,37 @@
             renderTable();
             setInterval(renderTable, 1000);
             window.onclick = e => { if (e.target.classList.contains('modal')) e.target.style.display = 'none'; };
-            document.getElementById('tableContainer').addEventListener('scroll', resetAutoScroll);
-            document.getElementById('tableContainer').addEventListener('touchmove', resetAutoScroll);
+
+            // 滚动监听用于10秒自动回弹
+            const tc = document.getElementById('tableContainer');
+            tc.addEventListener('scroll', resetAutoScroll);
+            tc.addEventListener('touchmove', resetAutoScroll);
             resetAutoScroll();
+
+            // Service Worker 自动更新
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').then(reg => {
+                    reg.onupdatefound = () => {
+                        const newWorker = reg.installing;
+                        newWorker.onstatechange = () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                if (confirm('有新版本可用，点击确定更新')) {
+                                    newWorker.postMessage({ action: 'skipWaiting' });
+                                    window.location.reload();
+                                }
+                            }
+                        };
+                    };
+                }).catch(err => console.log('SW注册失败', err));
+
+                let refreshing = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (!refreshing) {
+                        refreshing = true;
+                        window.location.reload();
+                    }
+                });
+            }
         }
         init();
     </script>
