@@ -7,280 +7,142 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2E54A1">
     <!-- EmailJS SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
         :root {
             --base-font-size: 14px;
+            --header-height: 50px;
+            --time-bar-height: 36px;
         }
         @media (max-width: 400px) { :root { --base-font-size: 12px; } }
         @media (min-width: 401px) and (max-width: 600px) { :root { --base-font-size: 13px; } }
+        @media (min-width: 601px) { :root { --base-font-size: 14px; } }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Microsoft YaHei', sans-serif;
-        }
-        body {
-            background: #f5f5f5;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            font-size: var(--base-font-size);
-        }
-
-        /* 固定头部 */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Microsoft YaHei', sans-serif; }
+        body { background: #f5f5f5; display: flex; flex-direction: column; height: 100vh; overflow: hidden; font-size: var(--base-font-size); }
         .header {
-            background: #2E54A1;
-            color: #FFF2BD;
-            padding: 10px 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-shrink: 0;
+            background: #2E54A1; color: #FFF2BD; padding: 0 15px;
+            display: flex; align-items: center; justify-content: space-between;
+            height: var(--header-height); flex-shrink: 0;
         }
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 1.3em;
-            font-weight: bold;
-        }
-        .header-left span { font-size: 1.4em; }
-        .add-btn {
-            background: #FFF2BD;
-            border: none;
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
-            font-size: 1.4em;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        /* 第二行：当前时间 + 水印 */
-        .sub-header {
-            background: #f0f0f0;
-            padding: 6px 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            flex-shrink: 0;
-            border-bottom: 1px solid #ddd;
+        .header h2 { font-size: 1.2em; display: flex; align-items: center; gap: 6px; flex: 1; justify-content: center; }
+        .header button {
+            background: #FFF2BD; border: none; padding: 8px 12px; border-radius: 10px;
+            font-weight: bold; cursor: pointer; font-size: 0.9em; min-width: 50px;
         }
         .current-time {
-            font-size: 0.9em;
-            z-index: 1;
+            background: #e9ecef; padding: 0 15px; font-size: 0.85em; text-align: center;
+            border-bottom: 1px solid #ccc; height: var(--time-bar-height); line-height: var(--time-bar-height);
+            position: relative; flex-shrink: 0;
         }
         .watermark {
-            position: absolute;
-            right: 15px;
-            color: #d0d0d0;
-            font-size: 0.7em;
-            letter-spacing: 1px;
-            pointer-events: none;
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            color: rgba(0,0,0,0.08); font-size: 0.75em; pointer-events: none;
         }
-
-        /* 可滚动表格区域 */
         .table-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px;
-            -webkit-overflow-scrolling: touch;
+            flex: 1; overflow-y: auto; padding: 8px; -webkit-overflow-scrolling: touch;
         }
         table {
-            width: 100%;
-            table-layout: fixed;
-            border-collapse: collapse;
-            background: white;
-            font-size: var(--base-font-size);
-            word-break: break-all;
+            width: 100%; table-layout: fixed; border-collapse: collapse;
+            background: white; font-size: var(--base-font-size);
         }
         th {
-            background: #2E54A1;
-            color: #FFF2BD;
-            padding: 8px 4px;
-            position: sticky;
-            top: 0;
-            z-index: 2;
-            text-align: center;
+            background: #2E54A1; color: #FFF2BD; padding: 8px 4px;
+            position: sticky; top: 0; z-index: 3; text-align: center;
         }
         td {
-            padding: 6px 4px;
-            border-bottom: 1px solid #ddd;
-            text-align: center;
+            padding: 6px 4px; border-bottom: 1px solid #ddd; text-align: center;
             vertical-align: middle;
         }
         th:nth-child(1) { width: 5em; }
         th:nth-child(2) { width: 3em; }
         th:nth-child(3) { width: 3em; }
         th:nth-child(4) { width: 10ch; }
-        th:nth-child(5) { width: 4em; }
+        th:nth-child(5) { width: 3.5em; }
         th:nth-child(6) { width: 3em; }
 
-        .deadline-cell {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
-        }
-        .deadline-status {
-            font-weight: bold;
-            font-size: 0.85em;
-            margin-top: 2px;
-        }
-        .countdown-cell {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            line-height: 1.4;
-        }
-
         .date-separator td {
-            background: #D9ECFF;
-            text-align: left;
-            padding: 8px 4px;
+            background: #D9ECFF; text-align: left; padding: 8px 4px;
         }
         .date-text {
-            background: #2E54A1;
-            color: #FFF2BD;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: bold;
+            background: #2E54A1; color: #FFF2BD; padding: 4px 8px;
+            border-radius: 4px; display: inline-block; font-weight: bold;
         }
         .row-completed td { color: #8eb47e; }
         .row-urgent td { color: #d04040; }
 
+        .deadline-cell {
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .status-text {
+            font-size: 0.9em; margin-top: 6px; font-weight: bold;
+        }
+        .countdown-cell {
+            display: flex; flex-direction: column; align-items: center;
+            line-height: 1.4;
+        }
         .btn-group {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            align-items: center;
+            display: flex; flex-direction: column; gap: 3px; align-items: center;
         }
         .btn-group button {
-            padding: 3px 6px;
-            font-size: 0.75em;
-            border: none;
-            border-radius: 4px;
-            background: #e0e0e0;
-            cursor: pointer;
-            width: 100%;
+            padding: 3px 6px; font-size: 0.75em; border: none;
+            border-radius: 4px; background: #e0e0e0; cursor: pointer; width: 100%;
         }
         .btn-group .btn-danger { background: #ffcccc; }
 
         .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;
         }
         .modal-content {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
-            max-height: 80vh;
-            overflow-y: auto;
+            background: white; padding: 20px; border-radius: 12px; width: 90%;
+            max-width: 420px; max-height: 85vh; overflow-y: auto;
         }
         .modal-content h3 { margin-bottom: 15px; color: #2E54A1; }
-        .modal-content input[type="text"],
-        .modal-content input[type="number"] {
-            width: 100%;
-            padding: 8px;
-            margin: 6px 0;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 1em;
+        .modal-content input[type="text"], .modal-content input[type="number"], .modal-content textarea {
+            width: 100%; padding: 8px; margin: 6px 0; border: 1px solid #ccc;
+            border-radius: 6px; font-size: 1em;
         }
-        .time-row {
-            display: flex;
-            gap: 2px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
+        .time-row { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
         .time-row input { width: 50px; text-align: center; }
-        .time-row .unit { margin-right: 8px; font-size: 0.9em; }
-        .quick-btns {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin: 10px 0;
-        }
+        .time-row span { font-size: 0.9em; }
+        .quick-btns { display: flex; flex-wrap: wrap; gap: 4px; margin: 10px 0; }
         .quick-btns button {
-            background: #e0e0e0;
-            color: black;
-            padding: 6px 8px;
-            font-size: 0.9em;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
+            background: #e0e0e0; color: black; padding: 6px 8px;
+            font-size: 0.9em; border: none; border-radius: 6px; cursor: pointer;
         }
-        .action-btns {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 15px;
-        }
+        .action-btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
         .action-btns button {
-            padding: 8px 16px;
-            font-size: 1em;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
+            padding: 8px 16px; font-size: 1em; border: none; border-radius: 6px;
+            cursor: pointer; font-weight: bold;
         }
         .btn-primary { background: #2E54A1; color: #FFF2BD; }
         .btn-cancel { background: #ccc; color: #333; }
 
-        .status-options {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-top: 10px;
-        }
+        .status-options { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
         .status-options button {
-            padding: 10px;
-            font-size: 1em;
-            border: none;
-            border-radius: 6px;
-            background: #f0f0f0;
-            cursor: pointer;
+            padding: 10px; font-size: 1em; border: none; border-radius: 6px;
+            background: #f0f0f0; cursor: pointer;
         }
-
-        #confirmModal .modal-content { text-align: center; }
-        .mail-toggle {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 10px 0;
-            font-size: 0.9em;
-        }
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; margin: 8px 0; }
+        .switch { position: relative; width: 48px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 26px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: #2E54A1; }
+        input:checked + .slider:before { transform: translateX(22px); }
     </style>
 </head>
 <body>
-    <!-- 固定头部 -->
     <div class="header">
-        <div class="header-left"><span>📅</span> 日程提醒</div>
-        <button class="add-btn" onclick="openAddModal()">＋</button>
+        <h2>📅 日程提醒</h2>
+        <button onclick="openSettings()">⚙️</button>
+        <button onclick="openAddModal()">➕</button>
     </div>
-
-    <!-- 第二行：当前时间 + 水印 -->
-    <div class="sub-header">
-        <span class="current-time" id="currentTime">加载中…</span>
-        <span class="watermark">DESIGN：CDH</span>
+    <div class="current-time" id="currentTime">
+        加载中…
+        <span class="watermark">DESIGNED BY CDH</span>
     </div>
-
-    <!-- 可滚动表格 -->
     <div class="table-container">
         <table id="scheduleTable">
             <thead>
@@ -290,7 +152,7 @@
         </table>
     </div>
 
-    <!-- 添加/修改模态框 -->
+    <!-- 模态框：添加/修改 -->
     <div class="modal" id="editModal">
         <div class="modal-content">
             <h3 id="modalTitle">添加日程</h3>
@@ -298,11 +160,11 @@
             <input type="text" id="responsible" placeholder="负责人">
             <input type="text" id="implementer" placeholder="落实人">
             <div class="time-row">
-                <input type="number" id="year" placeholder="年" min="2024" max="2099"><span class="unit">年</span>
-                <input type="number" id="month" placeholder="月" min="1" max="12"><span class="unit">月</span>
-                <input type="number" id="day" placeholder="日" min="1" max="31"><span class="unit">日</span>
-                <input type="number" id="hour" placeholder="时" min="0" max="23"><span class="unit">时</span>
-                <input type="number" id="minute" placeholder="分" min="0" max="59"><span class="unit">分</span>
+                <input type="number" id="year" placeholder="年"><span>年</span>
+                <input type="number" id="month" placeholder="月"><span>月</span>
+                <input type="number" id="day" placeholder="日"><span>日</span>
+                <input type="number" id="hour" placeholder="时"><span>时</span>
+                <input type="number" id="minute" placeholder="分"><span>分</span>
             </div>
             <div class="quick-btns">
                 <button onclick="quickAdd(15)">15分钟后</button>
@@ -319,7 +181,7 @@
         </div>
     </div>
 
-    <!-- 状态选择模态框 -->
+    <!-- 状态选择 -->
     <div class="modal" id="statusModal">
         <div class="modal-content">
             <h3>选择状态</h3>
@@ -330,11 +192,11 @@
         </div>
     </div>
 
-    <!-- 提醒弹窗 -->
+    <!-- 到期提醒 -->
     <div class="modal" id="alertModal">
         <div class="modal-content" style="text-align: center;">
             <h3>⏰ 日程提醒</h3>
-            <p id="alertMsg" style="margin: 15px 0; font-size: 1.1em; line-height: 1.6;"></p>
+            <p id="alertMsg" style="margin: 15px 0; font-size: 1.1em;"></p>
             <div class="action-btns" style="justify-content: center;">
                 <button class="btn-primary" onclick="alertComplete()">已完成</button>
                 <button class="btn-cancel" onclick="alertPostpone()">延期提醒</button>
@@ -342,10 +204,10 @@
         </div>
     </div>
 
-    <!-- 确认完成模态框 -->
+    <!-- 确认完成 -->
     <div class="modal" id="confirmModal">
-        <div class="modal-content">
-            <p style="font-size: 1.2em; margin-bottom: 20px;">确认标记为“已完成”？</p>
+        <div class="modal-content" style="text-align: center;">
+            <p style="font-size: 1.2em;">确认标记为“已完成”？</p>
             <div class="action-btns" style="justify-content: center;">
                 <button class="btn-cancel" onclick="closeConfirmModal()">取消</button>
                 <button class="btn-primary" onclick="confirmComplete()">确认完成</button>
@@ -353,81 +215,146 @@
         </div>
     </div>
 
-    <script>
-        // ========== 邮件开关（默认关闭） ==========
-        let mailEnabled = localStorage.getItem('mailEnabled') === 'true';
-        // EmailJS 初始化（需要换成你自己的 Public Key）
-        emailjs.init("YOUR_EMAILJS_PUBLIC_KEY"); // 替换为你的 EmailJS Public Key
+    <!-- 设置 -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <h3>⚙️ 设置</h3>
+            <div class="toggle-row">
+                <span>启用邮件通知</span>
+                <label class="switch">
+                    <input type="checkbox" id="emailEnabled" onchange="saveEmailSettings()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <p style="font-size:0.8em; color:#666;">需配置EmailJS，免费注册后获取参数。</p>
+            <input type="text" id="emailPublicKey" placeholder="EmailJS Public Key" onchange="saveEmailSettings()">
+            <input type="text" id="emailServiceId" placeholder="Service ID" onchange="saveEmailSettings()">
+            <input type="text" id="emailTemplateId" placeholder="Template ID" onchange="saveEmailSettings()">
+            <input type="text" id="emailTo" placeholder="收件邮箱 (如 your@qq.com)" onchange="saveEmailSettings()">
+            <div class="action-btns">
+                <button class="btn-cancel" onclick="closeSettings()">关闭</button>
+            </div>
+        </div>
+    </div>
 
-        // ========== 数据存储 ==========
+    <script>
+        emailjs.init(''); // 占位，实际初始化在加载设置后
+
+        // ---------- 数据存储 ----------
         const STORAGE_KEY = 'schedules_data';
         const NOTIFIED_KEY = 'notified_schedule_ids';
+        const EMAIL_SETTINGS_KEY = 'email_settings';
         let schedules = [];
         let editingId = null;
         let alertingId = null;
         let currentStatusScheduleId = null;
         let pendingCompleteId = null;
         let notifiedSet = new Set();
+        let emailSettings = { enabled: false, publicKey: '', serviceId: '', templateId: '', to: '' };
 
-        function loadNotifiedSet() { const raw = localStorage.getItem(NOTIFIED_KEY); notifiedSet = raw ? new Set(JSON.parse(raw)) : new Set(); }
-        function saveNotifiedSet() { localStorage.setItem(NOTIFIED_KEY, JSON.stringify([...notifiedSet])); }
-        function loadData() { const raw = localStorage.getItem(STORAGE_KEY); schedules = raw ? JSON.parse(raw) : []; }
-        function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(schedules)); }
-        function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
-
-        // ========== 邮件发送（使用 EmailJS） ==========
-        function sendMail(subject, body) {
-            if (!mailEnabled) return;
-            const templateParams = {
-                to_email: 'your_qq@qq.com',       // 你自己的 QQ 邮箱
-                subject: subject,
-                message: body
-            };
-            emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
-                .catch(err => console.warn('邮件发送失败', err));
+        function loadNotifiedSet() {
+            const raw = localStorage.getItem(NOTIFIED_KEY);
+            notifiedSet = raw ? new Set(JSON.parse(raw)) : new Set();
+        }
+        function saveNotifiedSet() {
+            localStorage.setItem(NOTIFIED_KEY, JSON.stringify([...notifiedSet]));
+        }
+        function loadData() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            schedules = raw ? JSON.parse(raw) : [];
+        }
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(schedules));
+        }
+        function loadEmailSettings() {
+            const raw = localStorage.getItem(EMAIL_SETTINGS_KEY);
+            if (raw) {
+                emailSettings = JSON.parse(raw);
+                document.getElementById('emailEnabled').checked = emailSettings.enabled;
+                document.getElementById('emailPublicKey').value = emailSettings.publicKey || '';
+                document.getElementById('emailServiceId').value = emailSettings.serviceId || '';
+                document.getElementById('emailTemplateId').value = emailSettings.templateId || '';
+                document.getElementById('emailTo').value = emailSettings.to || '';
+                if (emailSettings.publicKey) emailjs.init(emailSettings.publicKey);
+            }
+        }
+        function saveEmailSettings() {
+            emailSettings.enabled = document.getElementById('emailEnabled').checked;
+            emailSettings.publicKey = document.getElementById('emailPublicKey').value.trim();
+            emailSettings.serviceId = document.getElementById('emailServiceId').value.trim();
+            emailSettings.templateId = document.getElementById('emailTemplateId').value.trim();
+            emailSettings.to = document.getElementById('emailTo').value.trim();
+            localStorage.setItem(EMAIL_SETTINGS_KEY, JSON.stringify(emailSettings));
+            if (emailSettings.publicKey) emailjs.init(emailSettings.publicKey);
         }
 
-        // ========== 时间工具 ==========
+        function sendStatusEmail(schedule, statusText) {
+            if (!emailSettings.enabled || !emailSettings.serviceId || !emailSettings.templateId || !emailSettings.to) return;
+            const templateParams = {
+                to_email: emailSettings.to,
+                thing: schedule.thing,
+                responsible: schedule.responsible || '无',
+                implementer: schedule.implementer || '无',
+                deadline: schedule.deadline,
+                status: statusText,
+                time: new Date().toLocaleString()
+            };
+            emailjs.send(emailSettings.serviceId, emailSettings.templateId, templateParams)
+                .catch(err => console.warn('邮件发送失败:', err));
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        }
+
+        // ---------- 时间工具 ----------
         function getNow() { return new Date(); }
         function formatDateTime(date) {
-            const y = date.getFullYear(); const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0'); const h = String(date.getHours()).padStart(2, '0');
-            const min = String(date.getMinutes()).padStart(2, '0');
-            return `${y}-${m}-${d} ${h}:${min}:00`;
+            return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}:00`;
         }
-        function getWeekdayCN(dateStr) { const days = ['日', '一', '二', '三', '四', '五', '六']; return '星期' + days[new Date(dateStr).getDay()]; }
-
-        function calcCountdownHTML(deadlineStr, now) {
-            const dl = new Date(deadlineStr); const diff = dl - now;
-            if (diff <= 0) return '<span>计时结束</span>';
+        function getWeekdayCN(dateStr) {
+            const days = ['日','一','二','三','四','五','六'];
+            return '星期' + days[new Date(dateStr).getDay()];
+        }
+        function calcCountdownParts(deadlineStr, now) {
+            const dl = new Date(deadlineStr);
+            const diff = dl - now;
+            if (diff <= 0) return null;
             const totalSec = Math.floor(diff / 1000);
             const days = Math.floor(totalSec / 86400);
             const hours = Math.floor((totalSec % 86400) / 3600);
             const mins = Math.floor((totalSec % 3600) / 60);
             const secs = totalSec % 60;
-            let html = '<div class="countdown-cell">';
-            if (days > 0) html += `<span>${days}天</span>`;
-            if (hours > 0 || days > 0) html += `<span>${hours}小时</span>`;
-            if (mins > 0 || hours > 0 || days > 0) html += `<span>${mins}分</span>`;
-            html += `<span>${secs}秒</span></div>`;
-            return html;
+            return { days, hours, mins, secs };
         }
 
-        function getStatusTextAndColor(deadline, now, isCompleted) {
-            if (isCompleted) return { text: '已完成', color: '#8eb47e', cls: '' };
-            if (!deadline) return { text: '', color: '', cls: '' };
-            const dl = new Date(deadline);
-            if (dl <= now) return { text: '已完成', color: '#8eb47e', cls: '' };
-            const remaining = (dl - now) / 3600000;
-            if (remaining <= 1) return { text: '时间快到了', color: '#d04040', cls: 'row-urgent' };
-            if (remaining <= 3) return { text: '加油干！', color: '#FF8C00', cls: 'row-urgent' };
-            return { text: '进行中', color: '#666', cls: '' };
+        // ---------- 通知 ----------
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+        function showSystemNotification(schedule) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('⏰ 日程提醒', { body: `${schedule.thing}`, tag: schedule.id });
+            }
+        }
+        function checkAndNotifyExpired(schedule, now) {
+            if (!schedule.completed && new Date(schedule.deadline) <= now && !notifiedSet.has(schedule.id)) {
+                notifiedSet.add(schedule.id); saveNotifiedSet();
+                showSystemNotification(schedule);
+                if (document.visibilityState === 'visible') {
+                    alertingId = schedule.id;
+                    document.getElementById('alertMsg').innerHTML = `<strong>事项：</strong>${schedule.thing}<br>时间已到`;
+                    document.getElementById('alertModal').style.display = 'flex';
+                }
+            }
         }
 
-        // ========== 渲染表格 ==========
+        // ---------- 渲染表格 ----------
         function renderTable() {
             const now = getNow();
-            document.getElementById('currentTime').textContent = `当前时间：${now.toLocaleString()}`;
+            document.getElementById('currentTime').innerHTML = `当前时间：${now.toLocaleString()} <span class="watermark">DESIGNED BY CDH</span>`;
             schedules.sort((a, b) => (a.deadline || '').localeCompare(b.deadline || ''));
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
@@ -435,7 +362,7 @@
 
             for (const s of schedules) {
                 const deadline = s.deadline || '';
-                const datePart = deadline.slice(0, 10);
+                const datePart = deadline.slice(0,10);
                 if (datePart && datePart !== lastDate) {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `<td colspan="6" class="date-separator"><span class="date-text">${datePart} ${getWeekdayCN(datePart)}</span></td>`;
@@ -443,93 +370,124 @@
                 }
                 lastDate = datePart;
 
-                const statusInfo = getStatusTextAndColor(deadline, now, s.completed);
-                const countdownHTML = calcCountdownHTML(deadline, now);
-                const rowClass = statusInfo.cls;
+                const isCompleted = s.completed || false;
+                let rowClass = '';
+                let statusHtml = '';
+                let countdownHtml = '';
+
+                if (isCompleted) {
+                    rowClass = 'row-completed';
+                    statusHtml = '<span class="status-text" style="color:#8eb47e;">已完成</span>';
+                    countdownHtml = s.completed_countdown || '';
+                } else if (deadline) {
+                    const dl = new Date(deadline);
+                    const diffMs = dl - now;
+                    if (diffMs <= 0) {
+                        rowClass = 'row-completed';
+                        statusHtml = '<span class="status-text" style="color:#8eb47e;">已完成</span>';
+                        countdownHtml = '计时结束';
+                        checkAndNotifyExpired(s, now);
+                    } else {
+                        const diffHours = diffMs / 3600000;
+                        let statusColor, statusText;
+                        if (diffHours <= 1) { statusColor = '#d04040'; statusText = '时间快到了'; }
+                        else if (diffHours <= 3) { statusColor = 'orange'; statusText = '加油干！'; }
+                        else { statusColor = '#333'; statusText = '进行中'; }
+                        statusHtml = `<span class="status-text" style="color:${statusColor}; font-weight:bold;">${statusText}</span>`;
+                        const parts = calcCountdownParts(deadline, now);
+                        if (parts) {
+                            const seg = [];
+                            if (parts.days > 0) seg.push(`${parts.days}天`);
+                            if (parts.hours > 0 || parts.days > 0) seg.push(`${String(parts.hours).padStart(2,'0')}时`);
+                            if (parts.mins > 0 || parts.hours > 0 || parts.days > 0) seg.push(`${String(parts.mins).padStart(2,'0')}分`);
+                            seg.push(`${String(parts.secs).padStart(2,'0')}秒`);
+                            countdownHtml = seg.join('<br>');
+                        }
+                        rowClass = diffHours <= 3 ? 'row-urgent' : '';
+                    }
+                }
 
                 const tr = document.createElement('tr');
-                if (rowClass) tr.className = rowClass;
+                tr.className = rowClass;
                 tr.innerHTML = `
-                    <td>${s.thing || ''}</td>
-                    <td>${s.responsible || ''}</td>
-                    <td>${s.implementer || ''}</td>
+                    <td>${s.thing||''}</td>
+                    <td>${s.responsible||''}</td>
+                    <td>${s.implementer||''}</td>
                     <td>
                         <div class="deadline-cell">
-                            <span>${deadline.slice(0,10)}</span><span>${deadline.slice(11)}</span>
-                            <span class="deadline-status" style="color:${statusInfo.color}">${statusInfo.text}</span>
+                            <span>${deadline.slice(0,10)}</span>
+                            <span>${deadline.slice(11)}</span>
+                            ${statusHtml}
                         </div>
                     </td>
-                    <td>${countdownHTML}</td>
+                    <td><div class="countdown-cell">${countdownHtml}</div></td>
                     <td>
                         <div class="btn-group">
                             <button onclick="openEditModal('${s.id}')">修改</button>
                             <button onclick="openStatusModal('${s.id}')">状态</button>
                             <button class="btn-danger" onclick="deleteSchedule('${s.id}')">删除</button>
                         </div>
-                    </td>`;
+                    </td>
+                `;
                 tbody.appendChild(tr);
-
-                if (!s.completed && deadline && new Date(deadline) <= now && !notifiedSet.has(s.id)) {
-                    notifiedSet.add(s.id); saveNotifiedSet();
-                    if (document.visibilityState === 'visible') { alertingId = s.id; showAlert(s); }
-                    sendMail(`日程提醒：${s.thing}`, `事项：${s.thing}\n负责人：${s.responsible}\n截止时间：${s.deadline}`);
-                }
             }
         }
 
-        function showAlert(s) {
-            document.getElementById('alertMsg').innerHTML = `<strong>事项：</strong>${s.thing}<br><strong>负责人：</strong>${s.responsible}<br><strong>落实人：</strong>${s.implementer}<br><strong>截止时间：</strong>${s.deadline}<br><br>⏰ 时间已到，请确认状态`;
-            document.getElementById('alertModal').style.display = 'flex';
-        }
-        function alertComplete() { if (alertingId) markComplete(alertingId); document.getElementById('alertModal').style.display = 'none'; alertingId = null; }
-        function alertPostpone() { if (alertingId) { document.getElementById('alertModal').style.display = 'none'; openEditModal(alertingId); alertingId = null; } }
-
+        // ---------- 状态/提醒模态 ----------
         function openStatusModal(id) {
             currentStatusScheduleId = id;
             const s = schedules.find(item => item.id === id);
-            const opts = document.getElementById('statusOptions');
-            opts.innerHTML = '';
+            const div = document.getElementById('statusOptions');
+            div.innerHTML = '';
             if (s.completed) {
-                opts.innerHTML = `<button disabled style="background:#ccc">已完成</button><button onclick="closeStatusModal();openEditModal('${id}')">延期提醒</button>`;
+                div.innerHTML = '<button disabled>已完成</button>';
+                const btn = document.createElement('button');
+                btn.textContent = '延期提醒'; btn.onclick = () => { closeStatusModal(); openEditModal(id); };
+                div.appendChild(btn);
             } else {
-                opts.innerHTML = `
-                    <button onclick="closeStatusModal();openConfirmModal('${id}')">已完成</button>
-                    <button onclick="updateStatus('${id}',false)">加油干！</button>
-                    <button onclick="updateStatus('${id}',false)">进行中</button>`;
+                ['已完成','加油干！','进行中'].forEach(txt => {
+                    const btn = document.createElement('button');
+                    btn.textContent = txt;
+                    btn.onclick = () => {
+                        closeStatusModal();
+                        if (txt === '已完成') openConfirmModal(id);
+                        else {
+                            const sch = schedules.find(i => i.id === id);
+                            if (sch) { sch.completed = false; notifiedSet.delete(id); saveNotifiedSet(); saveData(); }
+                        }
+                    };
+                    div.appendChild(btn);
+                });
             }
             document.getElementById('statusModal').style.display = 'flex';
         }
-        function closeStatusModal() { document.getElementById('statusModal').style.display = 'none'; currentStatusScheduleId = null; }
-
-        function updateStatus(id, completed) {
-            const s = schedules.find(item => item.id === id);
-            if (s) { s.completed = completed; notifiedSet.delete(id); saveNotifiedSet(); saveData(); }
-        }
-
+        function closeStatusModal() { document.getElementById('statusModal').style.display = 'none'; }
         function openConfirmModal(id) { pendingCompleteId = id; document.getElementById('confirmModal').style.display = 'flex'; }
         function closeConfirmModal() { document.getElementById('confirmModal').style.display = 'none'; pendingCompleteId = null; }
-        function confirmComplete() { if (pendingCompleteId) { markComplete(pendingCompleteId); sendMail('日程已完成', `事项：${schedules.find(s=>s.id===pendingCompleteId)?.thing}`); } closeConfirmModal(); }
-
-        function markComplete(id) { const s = schedules.find(item => item.id === id); if (s) { s.completed = true; notifiedSet.delete(id); saveNotifiedSet(); saveData(); } }
-
-        function deleteSchedule(id) { if (confirm('确定删除此日程吗？')) { schedules = schedules.filter(item => item.id !== id); notifiedSet.delete(id); saveNotifiedSet(); saveData(); } }
-
-        function openEditModal(id) {
-            const s = schedules.find(item => item.id === id); if (!s) return;
-            editingId = id;
-            document.getElementById('modalTitle').textContent = '修改截止时间';
-            document.getElementById('thing').value = s.thing || '';
-            document.getElementById('responsible').value = s.responsible || '';
-            document.getElementById('implementer').value = s.implementer || '';
-            const dt = new Date(s.deadline);
-            document.getElementById('year').value = dt.getFullYear();
-            document.getElementById('month').value = String(dt.getMonth() + 1).padStart(2, '0');
-            document.getElementById('day').value = String(dt.getDate()).padStart(2, '0');
-            document.getElementById('hour').value = String(dt.getHours()).padStart(2, '0');
-            document.getElementById('minute').value = String(dt.getMinutes()).padStart(2, '0');
-            document.getElementById('errorMsg').textContent = '';
-            document.getElementById('editModal').style.display = 'flex';
+        function confirmComplete() {
+            if (pendingCompleteId) {
+                const s = schedules.find(i => i.id === pendingCompleteId);
+                if (s) { s.completed = true; notifiedSet.delete(pendingCompleteId); saveNotifiedSet(); saveData(); sendStatusEmail(s, '已完成'); }
+            }
+            closeConfirmModal();
         }
+        function alertComplete() {
+            if (alertingId) {
+                const s = schedules.find(i => i.id === alertingId);
+                if (s) { s.completed = true; saveData(); sendStatusEmail(s, '已完成'); }
+            }
+            document.getElementById('alertModal').style.display = 'none';
+            alertingId = null;
+        }
+        function alertPostpone() {
+            if (alertingId) {
+                document.getElementById('alertModal').style.display = 'none';
+                openEditModal(alertingId);
+                alertingId = null;
+            }
+        }
+
+        // ---------- 添加/修改 ----------
         function openAddModal() {
             editingId = null;
             document.getElementById('modalTitle').textContent = '添加日程';
@@ -540,42 +498,86 @@
             document.getElementById('errorMsg').textContent = '';
             document.getElementById('editModal').style.display = 'flex';
         }
-        function closeModal() { document.getElementById('editModal').style.display = 'none'; }
-        function setNowTime() { const now = getNow(); document.getElementById('year').value = now.getFullYear(); document.getElementById('month').value = String(now.getMonth() + 1).padStart(2, '0'); document.getElementById('day').value = String(now.getDate()).padStart(2, '0'); document.getElementById('hour').value = String(now.getHours()).padStart(2, '0'); document.getElementById('minute').value = String(now.getMinutes()).padStart(2, '0'); }
-        function quickAdd(minutes) {
-            const y = document.getElementById('year').value; const mo = document.getElementById('month').value;
-            const d = document.getElementById('day').value; const h = document.getElementById('hour').value;
-            const mi = document.getElementById('minute').value;
-            const dt = new Date(y, mo-1, d, h, mi); dt.setMinutes(dt.getMinutes() + minutes);
+        function openEditModal(id) {
+            const s = schedules.find(i => i.id === id);
+            if (!s) return;
+            editingId = id;
+            document.getElementById('modalTitle').textContent = '修改截止时间';
+            document.getElementById('thing').value = s.thing || '';
+            document.getElementById('responsible').value = s.responsible || '';
+            document.getElementById('implementer').value = s.implementer || '';
+            const dt = new Date(s.deadline);
             document.getElementById('year').value = dt.getFullYear();
-            document.getElementById('month').value = String(dt.getMonth() + 1).padStart(2, '0');
-            document.getElementById('day').value = String(dt.getDate()).padStart(2, '0');
-            document.getElementById('hour').value = String(dt.getHours()).padStart(2, '0');
-            document.getElementById('minute').value = String(dt.getMinutes()).padStart(2, '0');
+            document.getElementById('month').value = String(dt.getMonth()+1).padStart(2,'0');
+            document.getElementById('day').value = String(dt.getDate()).padStart(2,'0');
+            document.getElementById('hour').value = String(dt.getHours()).padStart(2,'0');
+            document.getElementById('minute').value = String(dt.getMinutes()).padStart(2,'0');
+            document.getElementById('errorMsg').textContent = '';
+            document.getElementById('editModal').style.display = 'flex';
+        }
+        function closeModal() { document.getElementById('editModal').style.display = 'none'; }
+        function setNowTime() {
+            const now = getNow();
+            document.getElementById('year').value = now.getFullYear();
+            document.getElementById('month').value = String(now.getMonth()+1).padStart(2,'0');
+            document.getElementById('day').value = String(now.getDate()).padStart(2,'0');
+            document.getElementById('hour').value = String(now.getHours()).padStart(2,'0');
+            document.getElementById('minute').value = String(now.getMinutes()).padStart(2,'0');
+        }
+        function quickAdd(minutes) {
+            const y=document.getElementById('year').value, mo=document.getElementById('month').value,
+                  d=document.getElementById('day').value, h=document.getElementById('hour').value,
+                  mi=document.getElementById('minute').value;
+            const dt = new Date(y,mo-1,d,h,mi);
+            dt.setMinutes(dt.getMinutes()+minutes);
+            document.getElementById('year').value = dt.getFullYear();
+            document.getElementById('month').value = String(dt.getMonth()+1).padStart(2,'0');
+            document.getElementById('day').value = String(dt.getDate()).padStart(2,'0');
+            document.getElementById('hour').value = String(dt.getHours()).padStart(2,'0');
+            document.getElementById('minute').value = String(dt.getMinutes()).padStart(2,'0');
         }
         function saveSchedule() {
             const thing = document.getElementById('thing').value.trim();
             const resp = document.getElementById('responsible').value.trim();
             const impl = document.getElementById('implementer').value.trim();
-            const y = parseInt(document.getElementById('year').value); const mo = parseInt(document.getElementById('month').value);
-            const d = parseInt(document.getElementById('day').value); const h = parseInt(document.getElementById('hour').value);
-            const mi = parseInt(document.getElementById('minute').value);
-            if (!thing) { document.getElementById('errorMsg').textContent = '事项不能为空'; return; }
-            if (isNaN(y) || isNaN(mo) || isNaN(d) || isNaN(h) || isNaN(mi)) { document.getElementById('errorMsg').textContent = '日期时间必须填完整'; return; }
-            const deadlineDate = new Date(y, mo-1, d, h, mi);
-            if (deadlineDate <= getNow()) { document.getElementById('errorMsg').textContent = '截止时间不能早于当前时间'; return; }
+            const y=parseInt(document.getElementById('year').value), mo=parseInt(document.getElementById('month').value),
+                  d=parseInt(document.getElementById('day').value), h=parseInt(document.getElementById('hour').value),
+                  mi=parseInt(document.getElementById('minute').value);
+            if (!thing) { document.getElementById('errorMsg').textContent='事项不能为空'; return; }
+            if (isNaN(y)||isNaN(mo)||isNaN(d)||isNaN(h)||isNaN(mi)) {
+                document.getElementById('errorMsg').textContent='日期时间必须填完整'; return;
+            }
+            const deadlineDate = new Date(y,mo-1,d,h,mi);
+            if (deadlineDate <= getNow()) { document.getElementById('errorMsg').textContent='截止时间不能早于当前时间'; return; }
             const deadlineStr = formatDateTime(deadlineDate);
             if (editingId) {
-                const s = schedules.find(item => item.id === editingId);
-                if (s) { s.deadline = deadlineStr; s.completed = false; notifiedSet.delete(editingId); saveNotifiedSet(); }
-            } else { schedules.push({ id: generateId(), thing, responsible: resp, implementer: impl, deadline: deadlineStr, completed: false }); }
+                const s = schedules.find(i=>i.id===editingId);
+                if (s) { s.deadline = deadlineStr; s.completed = false; notifiedSet.delete(editingId); saveNotifiedSet(); sendStatusEmail(s, '延期/修改'); }
+            } else {
+                const newSch = { id: generateId(), thing, responsible: resp, implementer: impl, deadline: deadlineStr, completed: false };
+                schedules.push(newSch);
+            }
             saveData(); closeModal();
         }
+        function deleteSchedule(id) {
+            if (confirm('确定删除吗？')) {
+                const s = schedules.find(i=>i.id===id);
+                if (s) sendStatusEmail(s, '已删除');
+                schedules = schedules.filter(i=>i.id!==id); notifiedSet.delete(id); saveNotifiedSet(); saveData();
+            }
+        }
 
+        // ---------- 设置 ----------
+        function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
+        function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
+
+        // ---------- 初始化 ----------
         function init() {
-            loadData(); loadNotifiedSet();
-            renderTable(); setInterval(renderTable, 1000);
-            window.onclick = function(event) { if (event.target.classList.contains('modal')) event.target.style.display = 'none'; };
+            loadData(); loadNotifiedSet(); loadEmailSettings();
+            requestNotificationPermission();
+            renderTable();
+            setInterval(renderTable, 1000);
+            window.onclick = e => { if (e.target.classList.contains('modal')) e.target.style.display = 'none'; };
             if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
         }
         init();
