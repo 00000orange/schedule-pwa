@@ -752,20 +752,6 @@
             tc.addEventListener('scroll', resetAutoScroll);
             tc.addEventListener('touchmove', resetAutoScroll);
             resetAutoScroll();
-
-            // Service Worker 自动更新
-          
-                    };
-                }).catch(err => console.log('SW注册失败', err));
-
-                let refreshing = false;
-                navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    if (!refreshing) {
-                        refreshing = true;
-                        window.location.reload();
-                    }
-                });
-            }
         }
         init();
     </script>
