@@ -24,7 +24,7 @@
             display: flex; align-items: center; justify-content: space-between;
             height: var(--header-height); flex-shrink: 0;
         }
-        .header h2 { font-size: 1.2em; display: flex; align-items: center; gap: 6px; flex: 1; justify-content: center; }
+        .header h2 { font-size: 1.2em; display: flex; align-items: center; gap: 6px; }
         .header button {
             background: #FFF2BD; border: none; padding: 8px 12px; border-radius: 10px;
             font-weight: bold; cursor: pointer; font-size: 0.9em; min-width: 50px;
@@ -39,7 +39,7 @@
             color: rgba(0,0,0,0.08); font-size: 0.75em; pointer-events: none;
         }
         .table-container {
-            flex: 1; overflow-y: auto; padding: 8px; -webkit-overflow-scrolling: touch;
+            flex: 1; overflow-y: auto; padding: 8px 8px 40px 8px; -webkit-overflow-scrolling: touch;
         }
         table {
             width: 100%; table-layout: fixed; border-collapse: collapse;
@@ -231,7 +231,7 @@
             <input type="text" id="emailTemplateId" placeholder="Template ID">
             <input type="text" id="emailTo" placeholder="收件邮箱 (如 your@qq.com)">
             <div class="action-btns">
-                <button class="btn-cancel" onclick="confirmSettings()">确认</button>
+                <button class="btn-primary" onclick="confirmSettings()">确认</button>
             </div>
         </div>
     </div>
@@ -242,17 +242,18 @@
         // ---------- 数据存储 ----------
         const STORAGE_KEY = 'schedules_data';
         const NOTIFIED_KEY = 'notified_schedule_ids';
-        const EMAIL_REMINDER_KEY = 'email_reminders_sent'; // 记录已发送的邮件提醒点
+        const EMAIL_REMINDER_KEY = 'email_reminders_sent';
         const EMAIL_SETTINGS_KEY = 'email_settings';
         let schedules = [];
         let editingId = null;
         let alertingId = null;
         let currentStatusScheduleId = null;
         let pendingCompleteId = null;
-        let notifiedSet = new Set();          // 已弹窗提醒过的ID
-        let emailReminders = {};              // { scheduleId: ['6h','1h'] } 或其它时间点
+        let notifiedSet = new Set();
+        let emailReminders = {};
         let emailSettings = { enabled: false, publicKey: '', serviceId: '', templateId: '', to: '' };
 
+        // 持久化
         function loadEmailReminders() {
             const raw = localStorage.getItem(EMAIL_REMINDER_KEY);
             emailReminders = raw ? JSON.parse(raw) : {};
@@ -260,7 +261,6 @@
         function saveEmailReminders() {
             localStorage.setItem(EMAIL_REMINDER_KEY, JSON.stringify(emailReminders));
         }
-
         function loadNotifiedSet() {
             const raw = localStorage.getItem(NOTIFIED_KEY);
             notifiedSet = raw ? new Set(JSON.parse(raw)) : new Set();
@@ -339,7 +339,12 @@
             return { days, hours, mins, secs, totalSec };
         }
 
-        // ---------- 邮件提醒逻辑 ----------
+        function resetEmailRemindersForSchedule(id) {
+            delete emailReminders[id];
+            saveEmailReminders();
+        }
+
+        // ---------- 邮件提醒检查 ----------
         function checkEmailReminders(schedule, now) {
             if (!canSendEmail() || schedule.completed) return;
             const deadline = new Date(schedule.deadline);
@@ -349,35 +354,32 @@
             const id = schedule.id;
             if (!emailReminders[id]) emailReminders[id] = [];
 
-            // 定义提醒点（秒）
             const points = [];
             if (diffSec > 3600) {
-                points.push(6 * 3600); // 6小时
-                points.push(3600);     // 1小时
+                points.push(6 * 3600);
+                points.push(3600);
             } else if (diffSec > 0) {
-                // 剩余时间小于等于1小时，提醒点为剩余时间的一半
                 points.push(Math.floor(diffSec / 2));
             }
 
             for (const p of points) {
                 const key = `${p}s`;
                 if (!emailReminders[id].includes(key) && diffSec <= p + 60 && diffSec >= p - 60) {
-                    // 在提醒点±60秒内触发，避免频繁触发
                     emailReminders[id].push(key);
                     saveEmailReminders();
                     const parts = calcCountdownParts(schedule.deadline, now);
                     if (parts) {
-                        let remainText = '';
-                        if (parts.days > 0) remainText += `${parts.days}天`;
-                        if (parts.hours > 0 || parts.days > 0) remainText += `${parts.hours}时`;
-                        remainText += `${parts.mins}分`;
-                        sendReminderEmail(schedule, remainText);
+                        let remain = '';
+                        if (parts.days > 0) remain += `${parts.days}天`;
+                        if (parts.hours > 0 || parts.days > 0) remain += `${parts.hours}时`;
+                        remain += `${parts.mins}分`;
+                        sendReminderEmail(schedule, remain);
                     }
                 }
             }
         }
 
-        // ---------- 通知 ----------
+        // ---------- 系统通知 ----------
         function requestNotificationPermission() {
             if ('Notification' in window && Notification.permission === 'default') {
                 Notification.requestPermission();
@@ -453,7 +455,6 @@
                             countdownHtml = seg.join('<br>');
                         }
                         rowClass = diffHours <= 3 ? 'row-urgent' : '';
-                        // 检查邮件提醒
                         checkEmailReminders(s, now);
                     }
                 }
@@ -476,20 +477,172 @@
             }
         }
 
-        // ---------- 状态与确认 ----------
-        function openStatusModal(id) { /* 保持原逻辑，略作调整 */ }
+        // ---------- 状态模态框 ----------
+        function openStatusModal(id) {
+            currentStatusScheduleId = id;
+            const s = schedules.find(i => i.id === id);
+            if (!s) return;
+            const div = document.getElementById('statusOptions');
+            div.innerHTML = '';
+            if (s.completed) {
+                const doneBtn = document.createElement('button');
+                doneBtn.textContent = '已完成';
+                doneBtn.disabled = true;
+                doneBtn.style.background = '#ccc';
+                div.appendChild(doneBtn);
+                const postponeBtn = document.createElement('button');
+                postponeBtn.textContent = '延期提醒';
+                postponeBtn.onclick = () => { closeStatusModal(); openEditModal(id); };
+                div.appendChild(postponeBtn);
+            } else {
+                const completeBtn = document.createElement('button');
+                completeBtn.textContent = '已完成';
+                completeBtn.onclick = () => { closeStatusModal(); openConfirmModal(id); };
+                div.appendChild(completeBtn);
+                const urgentBtn = document.createElement('button');
+                urgentBtn.textContent = '加油干！';
+                urgentBtn.onclick = () => {
+                    const sch = schedules.find(i => i.id === id);
+                    if (sch) { sch.completed = false; notifiedSet.delete(id); saveNotifiedSet(); saveData(); }
+                    closeStatusModal();
+                };
+                div.appendChild(urgentBtn);
+                const progressBtn = document.createElement('button');
+                progressBtn.textContent = '进行中';
+                progressBtn.onclick = () => {
+                    const sch = schedules.find(i => i.id === id);
+                    if (sch) { sch.completed = false; notifiedSet.delete(id); saveNotifiedSet(); saveData(); }
+                    closeStatusModal();
+                };
+                div.appendChild(progressBtn);
+            }
+            document.getElementById('statusModal').style.display = 'flex';
+        }
         function closeStatusModal() { document.getElementById('statusModal').style.display = 'none'; }
-        function openConfirmModal(id) { pendingCompleteId = id; document.getElementById('confirmModal').style.display = 'flex'; }
+
+        // ---------- 确认完成 ----------
+        function openConfirmModal(id) {
+            pendingCompleteId = id;
+            document.getElementById('confirmModal').style.display = 'flex';
+        }
         function closeConfirmModal() { pendingCompleteId = null; document.getElementById('confirmModal').style.display = 'none'; }
         function confirmComplete() {
             if (pendingCompleteId) {
                 const s = schedules.find(i => i.id === pendingCompleteId);
-                if (s) { s.completed = true; s.completed_countdown = ''; notifiedSet.delete(pendingCompleteId); saveNotifiedSet(); saveData(); }
+                if (s) {
+                    s.completed = true;
+                    s.completed_countdown = '';
+                    notifiedSet.delete(pendingCompleteId);
+                    saveNotifiedSet();
+                    saveData();
+                    resetEmailRemindersForSchedule(pendingCompleteId);
+                }
             }
             closeConfirmModal();
         }
-        function alertComplete() { /* 直接完成 */ }
-        function alertPostpone() { /* 延期 */ }
+
+        // ---------- 提醒弹窗 ----------
+        function alertComplete() {
+            if (alertingId) {
+                const s = schedules.find(i => i.id === alertingId);
+                if (s) { s.completed = true; saveData(); resetEmailRemindersForSchedule(alertingId); }
+            }
+            document.getElementById('alertModal').style.display = 'none';
+            alertingId = null;
+        }
+        function alertPostpone() {
+            if (alertingId) {
+                document.getElementById('alertModal').style.display = 'none';
+                openEditModal(alertingId);
+                alertingId = null;
+            }
+        }
+
+        // ---------- 添加/修改日程 ----------
+        function openAddModal() {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = '添加日程';
+            document.getElementById('thing').value = '';
+            document.getElementById('responsible').value = '';
+            document.getElementById('implementer').value = '';
+            setNowTime();
+            document.getElementById('errorMsg').textContent = '';
+            document.getElementById('editModal').style.display = 'flex';
+        }
+        function openEditModal(id) {
+            const s = schedules.find(i => i.id === id);
+            if (!s) return;
+            editingId = id;
+            document.getElementById('modalTitle').textContent = '修改截止时间';
+            document.getElementById('thing').value = s.thing || '';
+            document.getElementById('responsible').value = s.responsible || '';
+            document.getElementById('implementer').value = s.implementer || '';
+            const dt = new Date(s.deadline);
+            document.getElementById('year').value = dt.getFullYear();
+            document.getElementById('month').value = String(dt.getMonth()+1).padStart(2,'0');
+            document.getElementById('day').value = String(dt.getDate()).padStart(2,'0');
+            document.getElementById('hour').value = String(dt.getHours()).padStart(2,'0');
+            document.getElementById('minute').value = String(dt.getMinutes()).padStart(2,'0');
+            document.getElementById('errorMsg').textContent = '';
+            document.getElementById('editModal').style.display = 'flex';
+        }
+        function closeModal() { document.getElementById('editModal').style.display = 'none'; }
+        function setNowTime() {
+            const now = getNow();
+            document.getElementById('year').value = now.getFullYear();
+            document.getElementById('month').value = String(now.getMonth()+1).padStart(2,'0');
+            document.getElementById('day').value = String(now.getDate()).padStart(2,'0');
+            document.getElementById('hour').value = String(now.getHours()).padStart(2,'0');
+            document.getElementById('minute').value = String(now.getMinutes()).padStart(2,'0');
+        }
+        function quickAdd(minutes) {
+            const y=document.getElementById('year').value, mo=document.getElementById('month').value,
+                  d=document.getElementById('day').value, h=document.getElementById('hour').value,
+                  mi=document.getElementById('minute').value;
+            const dt = new Date(y,mo-1,d,h,mi);
+            dt.setMinutes(dt.getMinutes()+minutes);
+            document.getElementById('year').value = dt.getFullYear();
+            document.getElementById('month').value = String(dt.getMonth()+1).padStart(2,'0');
+            document.getElementById('day').value = String(dt.getDate()).padStart(2,'0');
+            document.getElementById('hour').value = String(dt.getHours()).padStart(2,'0');
+            document.getElementById('minute').value = String(dt.getMinutes()).padStart(2,'0');
+        }
+        function saveSchedule() {
+            const thing = document.getElementById('thing').value.trim();
+            const resp = document.getElementById('responsible').value.trim();
+            const impl = document.getElementById('implementer').value.trim();
+            const y=parseInt(document.getElementById('year').value), mo=parseInt(document.getElementById('month').value),
+                  d=parseInt(document.getElementById('day').value), h=parseInt(document.getElementById('hour').value),
+                  mi=parseInt(document.getElementById('minute').value);
+            if (!thing) { document.getElementById('errorMsg').textContent='事项不能为空'; return; }
+            if (isNaN(y)||isNaN(mo)||isNaN(d)||isNaN(h)||isNaN(mi)) {
+                document.getElementById('errorMsg').textContent='日期时间必须填完整'; return;
+            }
+            const deadlineDate = new Date(y,mo-1,d,h,mi);
+            if (deadlineDate <= getNow()) { document.getElementById('errorMsg').textContent='截止时间不能早于当前时间'; return; }
+            const deadlineStr = formatDateTime(deadlineDate);
+            if (editingId) {
+                const s = schedules.find(i=>i.id===editingId);
+                if (s) {
+                    s.deadline = deadlineStr;
+                    s.completed = false;
+                    notifiedSet.delete(editingId); saveNotifiedSet();
+                    resetEmailRemindersForSchedule(editingId);
+                }
+            } else {
+                schedules.push({ id: generateId(), thing, responsible: resp, implementer: impl, deadline: deadlineStr, completed: false });
+            }
+            saveData();
+            closeModal();
+        }
+        function deleteSchedule(id) {
+            if (confirm('确定删除此日程吗？')) {
+                schedules = schedules.filter(i=>i.id!==id);
+                notifiedSet.delete(id); saveNotifiedSet();
+                resetEmailRemindersForSchedule(id);
+                saveData();
+            }
+        }
 
         // ---------- 设置 ----------
         function openSettings() {
@@ -510,21 +663,12 @@
             document.getElementById('settingsModal').style.display = 'none';
         }
 
-        // ---------- 其他函数（openEditModal, saveSchedule等保持之前逻辑，需重置邮件提醒记录） ----------
-        function resetEmailRemindersForSchedule(id) {
-            delete emailReminders[id];
-            saveEmailReminders();
-        }
-        // 修改日程时重置邮件提醒
-        function saveSchedule() {
-            // ... 原有保存逻辑，并在修改/新增时调用 resetEmailRemindersForSchedule
-        }
-        // 删除时清理
-        function deleteSchedule(id) { /* 清理 emailReminders */ }
-
         // ---------- 初始化 ----------
         function init() {
-            loadData(); loadNotifiedSet(); loadEmailReminders(); loadEmailSettings();
+            loadData();
+            loadNotifiedSet();
+            loadEmailReminders();
+            loadEmailSettings();
             requestNotificationPermission();
             renderTable();
             setInterval(renderTable, 1000);
