@@ -108,7 +108,6 @@
         table {
             width: 100%; table-layout: fixed; border-collapse: collapse;
             background: var(--table-bg); font-size: var(--base-font-size);
-            min-height: 101%;
             color: var(--text-color);
         }
         th {
@@ -157,17 +156,17 @@
         .fab-container {
             position: fixed;
             right: 12px;
-            bottom: 30px;
+            bottom: 20px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
             z-index: 20;
         }
         .fab {
             width: 42px;
             height: 42px;
             border-radius: 50%;
-            background: rgba(245, 245, 245, 0.85); /* 奶白色毛玻璃 */
+            background: rgba(245, 245, 245, 0.7);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(200,200,200,0.4);
@@ -181,9 +180,7 @@
             color: #555;
             font-weight: bold;
         }
-        .fab:active {
-            background: rgba(255,255,255,0.95);
-        }
+        .fab:active { background: rgba(255,255,255,0.95); }
         .dark-mode .fab {
             background: rgba(180,180,190,0.8);
             border-color: rgba(255,255,255,0.2);
@@ -350,13 +347,20 @@
         <div class="modal-content">
             <h3>⚙️ 设置</h3>
             <div class="toggle-row">
+                <span>启用系统提醒</span>
+                <label class="switch">
+                    <input type="checkbox" id="notifyEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
                 <span>启用邮件通知</span>
                 <label class="switch">
                     <input type="checkbox" id="emailEnabled">
                     <span class="slider"></span>
                 </label>
             </div>
-            <p style="font-size:0.8em; color:#666;">需配置EmailJS</p>
+            <p style="font-size:0.8em; color:#666;">邮件配置 (EmailJS)</p>
             <input type="text" id="emailPublicKey" placeholder="EmailJS Public Key">
             <input type="text" id="emailServiceId" placeholder="Service ID">
             <input type="text" id="emailTemplateId" placeholder="Template ID">
@@ -372,17 +376,15 @@
 
         // ========== 全局变量 ==========
         const STORAGE_KEY = 'schedules_data';
-        const NOTIFIED_KEY = 'notified_schedule_ids';
-        const EMAIL_REMINDER_KEY = 'email_reminders_sent';
-        const EMAIL_SETTINGS_KEY = 'email_settings';
+        const REMINDER_FIRED_KEY = 'reminder_fired';
+        const SETTINGS_KEY = 'app_settings';
         let schedules = [];
         let editingId = null;
         let alertingId = null;
         let currentStatusScheduleId = null;
         let pendingCompleteId = null;
-        let notifiedSet = new Set();
-        let emailReminders = {};
-        let emailSettings = { enabled: false, publicKey: '', serviceId: '', templateId: '', to: '' };
+        let reminderFired = {}; // { scheduleId: ['24h','6h','1h','expired'] }
+        let appSettings = { notifyEnabled: true, emailEnabled: false, emailPublicKey: '', emailServiceId: '', emailTemplateId: '', emailTo: '' };
         let pastTimePending = null;
         let modalCount = 0;
 
@@ -413,38 +415,43 @@
         document.addEventListener('dblclick', e => e.preventDefault(), {passive: false});
 
         // ---------- 数据管理 ----------
-        function loadEmailReminders() { const raw = localStorage.getItem(EMAIL_REMINDER_KEY); emailReminders = raw ? JSON.parse(raw) : {}; }
-        function saveEmailReminders() { localStorage.setItem(EMAIL_REMINDER_KEY, JSON.stringify(emailReminders)); }
-        function loadNotifiedSet() { const raw = localStorage.getItem(NOTIFIED_KEY); notifiedSet = raw ? new Set(JSON.parse(raw)) : new Set(); }
-        function saveNotifiedSet() { localStorage.setItem(NOTIFIED_KEY, JSON.stringify([...notifiedSet])); }
+        function loadReminderFired() {
+            const raw = localStorage.getItem(REMINDER_FIRED_KEY);
+            reminderFired = raw ? JSON.parse(raw) : {};
+        }
+        function saveReminderFired() { localStorage.setItem(REMINDER_FIRED_KEY, JSON.stringify(reminderFired)); }
+        function resetReminderFiredForSchedule(id) { delete reminderFired[id]; saveReminderFired(); }
         function loadData() { const raw = localStorage.getItem(STORAGE_KEY); schedules = raw ? JSON.parse(raw) : []; }
         function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(schedules)); }
-        function loadEmailSettings() {
-            const raw = localStorage.getItem(EMAIL_SETTINGS_KEY);
+        function loadSettings() {
+            const raw = localStorage.getItem(SETTINGS_KEY);
             if (raw) {
-                emailSettings = JSON.parse(raw);
-                document.getElementById('emailEnabled').checked = emailSettings.enabled;
-                document.getElementById('emailPublicKey').value = emailSettings.publicKey || '';
-                document.getElementById('emailServiceId').value = emailSettings.serviceId || '';
-                document.getElementById('emailTemplateId').value = emailSettings.templateId || '';
-                document.getElementById('emailTo').value = emailSettings.to || '';
-                if (emailSettings.publicKey) emailjs.init(emailSettings.publicKey);
+                appSettings = JSON.parse(raw);
+                document.getElementById('notifyEnabled').checked = appSettings.notifyEnabled !== false;
+                document.getElementById('emailEnabled').checked = appSettings.emailEnabled || false;
+                document.getElementById('emailPublicKey').value = appSettings.emailPublicKey || '';
+                document.getElementById('emailServiceId').value = appSettings.emailServiceId || '';
+                document.getElementById('emailTemplateId').value = appSettings.emailTemplateId || '';
+                document.getElementById('emailTo').value = appSettings.emailTo || '';
+                if (appSettings.emailPublicKey) emailjs.init(appSettings.emailPublicKey);
             }
         }
-        function saveEmailSettingsToStorage() {
-            emailSettings.enabled = document.getElementById('emailEnabled').checked;
-            emailSettings.publicKey = document.getElementById('emailPublicKey').value.trim();
-            emailSettings.serviceId = document.getElementById('emailServiceId').value.trim();
-            emailSettings.templateId = document.getElementById('emailTemplateId').value.trim();
-            emailSettings.to = document.getElementById('emailTo').value.trim();
-            localStorage.setItem(EMAIL_SETTINGS_KEY, JSON.stringify(emailSettings));
-            if (emailSettings.publicKey) emailjs.init(emailSettings.publicKey);
+        function saveSettings() {
+            appSettings.notifyEnabled = document.getElementById('notifyEnabled').checked;
+            appSettings.emailEnabled = document.getElementById('emailEnabled').checked;
+            appSettings.emailPublicKey = document.getElementById('emailPublicKey').value.trim();
+            appSettings.emailServiceId = document.getElementById('emailServiceId').value.trim();
+            appSettings.emailTemplateId = document.getElementById('emailTemplateId').value.trim();
+            appSettings.emailTo = document.getElementById('emailTo').value.trim();
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(appSettings));
+            if (appSettings.emailPublicKey) emailjs.init(appSettings.emailPublicKey);
         }
-        function canSendEmail() { return emailSettings.enabled && emailSettings.publicKey && emailSettings.serviceId && emailSettings.templateId && emailSettings.to; }
+        function canSendEmail() { return appSettings.emailEnabled && appSettings.emailPublicKey && appSettings.emailServiceId && appSettings.emailTemplateId && appSettings.emailTo; }
+
         function sendReminderEmail(schedule, remainingText) {
             if (!canSendEmail()) return;
-            emailjs.send(emailSettings.serviceId, emailSettings.templateId, {
-                to_email: emailSettings.to,
+            emailjs.send(appSettings.emailServiceId, appSettings.emailTemplateId, {
+                to_email: appSettings.emailTo,
                 thing: schedule.thing,
                 responsible: schedule.responsible || '无',
                 implementer: schedule.implementer || '无',
@@ -454,6 +461,7 @@
                 subject: `提醒事项 剩余 ${remainingText}`
             }).catch(err => console.warn('邮件发送失败:', err));
         }
+
         function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,5); }
         function getNow() { return new Date(); }
         function formatDateTime(date) {
@@ -487,51 +495,56 @@
             parts.push('完成');
             return parts.join(' ');
         }
-        function resetEmailRemindersForSchedule(id) { delete emailReminders[id]; saveEmailReminders(); }
 
-        function checkEmailReminders(schedule, now) {
-            if (!canSendEmail() || schedule.completed) return;
-            const deadline = new Date(schedule.deadline);
-            const diffSec = Math.floor((deadline - now) / 1000);
-            if (diffSec <= 0) return;
+        // ---------- 统一的提醒检查 (24h, 6h, 1h, 到期) ----------
+        function checkAllReminders(schedule, now) {
+            if (schedule.completed) return;
+            const dl = new Date(schedule.deadline);
+            const diffSec = Math.floor((dl - now) / 1000);
             const id = schedule.id;
-            if (!emailReminders[id]) emailReminders[id] = [];
-            const points = [];
-            if (diffSec > 3600) { points.push(6 * 3600); points.push(3600); }
-            else if (diffSec > 0) { points.push(Math.floor(diffSec / 2)); }
-            for (const p of points) {
-                const key = `${p}s`;
-                if (!emailReminders[id].includes(key) && diffSec <= p + 60 && diffSec >= p - 60) {
-                    emailReminders[id].push(key); saveEmailReminders();
-                    const parts = calcCountdownParts(schedule.deadline, now);
-                    if (parts) {
-                        let remain = '';
-                        if (parts.days > 0) remain += `${parts.days}天`;
-                        if (parts.hours > 0 || parts.days > 0) remain += `${parts.hours}时`;
-                        remain += `${parts.mins}分`;
-                        sendReminderEmail(schedule, remain);
-                    }
-                }
-            }
-        }
+            if (!reminderFired[id]) reminderFired[id] = [];
 
-        function requestNotificationPermission() {
-            if ('Notification' in window && Notification.permission === 'default') { Notification.requestPermission(); }
-        }
-        function showSystemNotification(schedule) {
-            if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification('⏰ 日程提醒', { body: schedule.thing, tag: schedule.id });
-            }
-        }
-        function checkAndNotifyExpired(schedule, now) {
-            if (!schedule.completed && new Date(schedule.deadline) <= now && !notifiedSet.has(schedule.id)) {
-                notifiedSet.add(schedule.id); saveNotifiedSet();
-                showSystemNotification(schedule);
-                if (document.visibilityState === 'visible') {
-                    alertingId = schedule.id;
-                    document.getElementById('alertMsg').innerHTML = `<strong>事项：</strong>${schedule.thing}<br>时间已到`;
-                    document.getElementById('alertModal').style.display = 'flex';
-                    lockScroll();
+            const points = [
+                { key: '24h', seconds: 24*3600, label: '1天' },
+                { key: '6h', seconds: 6*3600, label: '6小时' },
+                { key: '1h', seconds: 3600, label: '1小时' },
+                { key: 'expired', seconds: 0, label: '已到期' }
+            ];
+
+            for (const point of points) {
+                if (reminderFired[id].includes(point.key)) continue;
+                const threshold = point.key === 'expired' ? 60 : 60; // 宽限60秒
+                if (diffSec <= point.seconds + threshold && diffSec >= point.seconds - threshold) {
+                    reminderFired[id].push(point.key);
+                    saveReminderFired();
+
+                    // 系统通知
+                    if (appSettings.notifyEnabled && 'Notification' in window && Notification.permission === 'granted') {
+                        new Notification('⏰ 日程提醒', { body: `${schedule.thing} - ${point.label === '已到期' ? '时间到' : '剩余' + point.label}`, tag: id + point.key });
+                    }
+
+                    // 邮件通知
+                    if (canSendEmail()) {
+                        let remainText = point.label;
+                        if (point.key !== 'expired') {
+                            const parts = calcCountdownParts(schedule.deadline, now);
+                            if (parts) {
+                                remainText = '';
+                                if (parts.days > 0) remainText += `${parts.days}天`;
+                                if (parts.hours > 0 || parts.days > 0) remainText += `${parts.hours}时`;
+                                remainText += `${parts.mins}分`;
+                            }
+                        }
+                        sendReminderEmail(schedule, remainText);
+                    }
+
+                    // 到期特殊弹窗 (仅当页面可见时)
+                    if (point.key === 'expired' && document.visibilityState === 'visible') {
+                        alertingId = id;
+                        document.getElementById('alertMsg').innerHTML = `<strong>事项：</strong>${schedule.thing}<br>时间已到`;
+                        document.getElementById('alertModal').style.display = 'flex';
+                        lockScroll();
+                    }
                 }
             }
         }
@@ -565,11 +578,7 @@
             return rows[0] || null;
         }
 
-        function scrollToTop() {
-            // 滚动到表格顶部，完整显示第一条日程
-            smoothScrollTo(0);
-        }
-
+        function scrollToTop() { smoothScrollTo(0); }
         function scrollToToday() {
             const row = findTodayRow();
             if (!row) return;
@@ -577,18 +586,12 @@
             const rowTop = row.offsetTop;
             const rowHeight = row.offsetHeight;
             const containerHeight = container.clientHeight;
-
-            // 计算目标位置，使该行居中显示
             let targetY = rowTop - (containerHeight / 2) + (rowHeight / 2);
-            // 如果不能居中（目标位置小于0），则顶行显示
             if (targetY < 0) targetY = 0;
-            // 如果目标位置超过最大滚动距离，则滚动到底部
             const maxScroll = container.scrollHeight - containerHeight;
             if (targetY > maxScroll) targetY = maxScroll;
-
             smoothScrollTo(targetY);
         }
-
         function scrollToBottom() {
             const container = document.getElementById('tableContainer');
             const rows = document.querySelectorAll('#tableBody tr');
@@ -597,13 +600,10 @@
             const rowTop = lastRow.offsetTop;
             const rowHeight = lastRow.offsetHeight;
             const containerHeight = container.clientHeight;
-
-            // 计算目标位置，使最后一行居中显示
             let targetY = rowTop - (containerHeight / 2) + (rowHeight / 2);
             const maxScroll = container.scrollHeight - containerHeight;
             if (targetY > maxScroll) targetY = maxScroll;
             if (targetY < 0) targetY = 0;
-
             smoothScrollTo(targetY);
         }
 
@@ -640,7 +640,6 @@
                         rowClass = 'row-completed';
                         statusHtml = '<span class="status-text" style="color:#8eb47e;">已完成</span>';
                         countdownHtml = '计时结束';
-                        checkAndNotifyExpired(s, now);
                     } else {
                         const diffHours = diffMs / 3600000;
                         let statusColor, statusText;
@@ -658,8 +657,9 @@
                             countdownHtml = seg.join('<br>');
                         }
                         rowClass = diffHours <= 3 ? 'row-urgent' : '';
-                        checkEmailReminders(s, now);
                     }
+                    // 调用统一提醒检查
+                    checkAllReminders(s, now);
                 }
 
                 const tr = document.createElement('tr');
@@ -724,10 +724,8 @@
                     if (diffSec > 0) s.completed_countdown = formatAdvanceText(diffSec);
                     else s.completed_countdown = '';
                     s.completed = true;
-                    notifiedSet.delete(pendingCompleteId);
-                    saveNotifiedSet();
+                    resetReminderFiredForSchedule(pendingCompleteId);
                     saveData();
-                    resetEmailRemindersForSchedule(pendingCompleteId);
                 }
             }
             closeConfirmModal();
@@ -742,8 +740,8 @@
                     const diffSec = Math.floor((dl - now) / 1000);
                     s.completed_countdown = diffSec > 0 ? formatAdvanceText(diffSec) : '';
                     s.completed = true;
+                    resetReminderFiredForSchedule(alertingId);
                     saveData();
-                    resetEmailRemindersForSchedule(alertingId);
                 }
             }
             document.getElementById('alertModal').style.display = 'none';
@@ -838,7 +836,7 @@
             const deadlineStr = formatDateTime(new Date(year, month-1, day, hour, minute));
             if (isEditing) {
                 const s = schedules.find(i => i.id === isEditing);
-                if (s) { s.deadline = deadlineStr; s.completed = true; notifiedSet.delete(isEditing); saveNotifiedSet(); resetEmailRemindersForSchedule(isEditing); }
+                if (s) { s.deadline = deadlineStr; s.completed = true; resetReminderFiredForSchedule(isEditing); }
             } else {
                 schedules.push({ id: generateId(), thing, responsible: resp, implementer: impl, deadline: deadlineStr, completed: true });
             }
@@ -851,7 +849,7 @@
             const deadlineStr = formatDateTime(new Date(y, mo-1, d, h, mi));
             if (editingId) {
                 const s = schedules.find(i => i.id === editingId);
-                if (s) { s.deadline = deadlineStr; s.completed = false; notifiedSet.delete(editingId); saveNotifiedSet(); resetEmailRemindersForSchedule(editingId); }
+                if (s) { s.deadline = deadlineStr; s.completed = false; resetReminderFiredForSchedule(editingId); }
             } else {
                 schedules.push({ id: generateId(), thing, responsible: resp, implementer: impl, deadline: deadlineStr, completed: false });
             }
@@ -862,24 +860,14 @@
         function deleteSchedule(id) {
             if (confirm('确定删除此日程吗？')) {
                 schedules = schedules.filter(i => i.id !== id);
-                notifiedSet.delete(id); saveNotifiedSet();
-                resetEmailRemindersForSchedule(id);
+                resetReminderFiredForSchedule(id);
                 saveData();
             }
         }
 
-        function openSettings() { loadEmailSettings(); document.getElementById('settingsModal').style.display = 'flex'; lockScroll(); }
+        function openSettings() { loadSettings(); document.getElementById('settingsModal').style.display = 'flex'; lockScroll(); }
         function confirmSettings() {
-            const enabled = document.getElementById('emailEnabled').checked;
-            const publicKey = document.getElementById('emailPublicKey').value.trim();
-            const serviceId = document.getElementById('emailServiceId').value.trim();
-            const templateId = document.getElementById('emailTemplateId').value.trim();
-            const to = document.getElementById('emailTo').value.trim();
-            if (enabled && (!publicKey || !serviceId || !templateId || !to)) {
-                alert('请填写完整的邮件配置，或关闭邮件开关');
-                return;
-            }
-            saveEmailSettingsToStorage();
+            saveSettings();
             document.getElementById('settingsModal').style.display = 'none';
             unlockScroll();
         }
@@ -918,10 +906,12 @@
         // ========== 启动 ==========
         function init() {
             loadData();
-            loadNotifiedSet();
-            loadEmailReminders();
-            loadEmailSettings();
-            requestNotificationPermission();
+            loadReminderFired();
+            loadSettings();
+            // 请求通知权限
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
             renderTable();
             setInterval(renderTable, 1000);
         }
