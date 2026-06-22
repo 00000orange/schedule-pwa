@@ -12,7 +12,23 @@
             --base-font-size: 14px;
             --header-height: 50px;
             --time-bar-height: 36px;
+            --bg: #f5f5f5;
+            --table-bg: white;
+            --text-color: #333;
+            --header-bg: #2E54A1;
+            --header-text: #FFF2BD;
+            --time-bg: #e9ecef;
+            --separator-bg: #D9ECFF;
         }
+        .dark-mode {
+            --bg: #1e1e1e;
+            --table-bg: #2c2c2c;
+            --text-color: #ddd;
+            --header-bg: #1a1a2e;
+            --time-bg: #333;
+            --separator-bg: #3a3a5c;
+        }
+
         @media (max-width: 400px) {
             :root { --base-font-size: 12px; }
             .time-row input { font-size: 12px !important; }
@@ -27,36 +43,55 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Microsoft YaHei', sans-serif; }
         html, body {
-            touch-action: manipulation; /* 禁止双击缩放 */
+            touch-action: manipulation;
             -webkit-user-select: none;
             user-select: none;
         }
         body {
-            background: #f5f5f5; display: flex; flex-direction: column;
+            background: var(--bg);
+            display: flex; flex-direction: column;
             height: 100vh; overflow: hidden; font-size: var(--base-font-size);
             -webkit-overflow-scrolling: touch;
             position: relative;
+            color: var(--text-color);
         }
         .header {
-            background: #2E54A1; color: #FFF2BD; padding: 0 12px;
+            background: var(--header-bg); color: var(--header-text); padding: 0 8px;
             display: flex; align-items: center; justify-content: space-between;
             height: var(--header-height); flex-shrink: 0;
             z-index: 10;
+            gap: 4px;
         }
         .header .title {
             font-size: 1.4em; display: flex; align-items: center; gap: 6px;
-            flex-shrink: 0; max-width: calc(100% - 100px);
+            flex-shrink: 0; max-width: calc(100% - 120px);
         }
         .header .btn-row {
-            display: flex; gap: 0.5ch; flex-shrink: 0;
+            display: flex; gap: 6px; align-items: center; flex-shrink: 0;
         }
         .header button {
-            background: #FFF2BD; border: none; width: 36px; height: 36px; border-radius: 10px;
+            border: none; border-radius: 10px;
             font-weight: bold; cursor: pointer; font-size: 1.1em;
             display: flex; align-items: center; justify-content: center;
+            background: #FFF2BD; color: #333; height: 36px;
+        }
+        .btn-add {
+            width: 36px; border-radius: 10px;
+        }
+        .btn-wide {
+            width: auto; padding: 0 10px; border-radius: 10px;
+        }
+        .btn-refresh {
+            background: transparent !important; color: var(--header-text) !important;
+            font-size: 1.4em; width: 36px; height: 36px; border-radius: 50%;
+        }
+        .btn-darkmode {
+            background: transparent !important; border: none; font-size: 1.5em;
+            width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            color: var(--header-text);
         }
         .current-time {
-            background: #e9ecef; padding: 0 15px; font-size: 0.85em; text-align: center;
+            background: var(--time-bg); padding: 0 15px; font-size: 0.85em; text-align: center;
             border-bottom: 1px solid #ccc; height: var(--time-bar-height);
             line-height: var(--time-bar-height); position: relative; flex-shrink: 0;
             z-index: 10;
@@ -70,15 +105,16 @@
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
             touch-action: pan-y;
-            background: white;
+            background: var(--table-bg);
         }
         table {
             width: 100%; table-layout: fixed; border-collapse: collapse;
-            background: white; font-size: var(--base-font-size);
-            min-height: 101%; /* 保证即使内容少也能轻微滑动 */
+            background: var(--table-bg); font-size: var(--base-font-size);
+            min-height: 101%;
+            color: var(--text-color);
         }
         th {
-            background: #2E54A1; color: #FFF2BD; padding: 8px 4px;
+            background: var(--header-bg); color: var(--header-text); padding: 8px 4px;
             position: sticky; top: 0; z-index: 3; text-align: center;
         }
         td {
@@ -93,35 +129,24 @@
         th:nth-child(6) { width: 3em; }
 
         .date-separator td {
-            background: #D9ECFF; text-align: left; padding: 8px 4px;
+            background: var(--separator-bg); text-align: left; padding: 8px 4px;
         }
         .date-text {
             background: #2E54A1; color: #FFF2BD; padding: 4px 8px;
             border-radius: 4px; display: inline-block; font-weight: bold;
         }
         .row-completed td { color: #8eb47e; }
-        .row-completed .btn-group button {
-            background: #e0e0e0;
-            color: inherit; /* 继承绿色 */
-        }
+        .row-completed .btn-group button { background: #e0e0e0; }
         .row-urgent td { color: #d04040; }
 
-        .deadline-cell {
-            display: flex; flex-direction: column; align-items: center;
-        }
-        .status-text {
-            font-size: 0.9em; margin-top: 6px; font-weight: bold;
-        }
-        .countdown-cell {
-            display: flex; flex-direction: column; align-items: center;
-            line-height: 1.4;
-        }
-        .btn-group {
-            display: flex; flex-direction: column; gap: 3px; align-items: center;
-        }
+        .deadline-cell { display: flex; flex-direction: column; align-items: center; }
+        .status-text { font-size: 0.9em; margin-top: 6px; font-weight: bold; }
+        .countdown-cell { display: flex; flex-direction: column; align-items: center; line-height: 1.4; }
+        .btn-group { display: flex; flex-direction: column; gap: 3px; align-items: center; }
         .btn-group button {
             padding: 3px 6px; font-size: 0.75em; border: none;
             border-radius: 4px; background: #e0e0e0; cursor: pointer; width: 100%;
+            color: inherit;
         }
         .btn-group .btn-danger { background: #ffcccc; }
 
@@ -138,9 +163,7 @@
             width: 100%; padding: 8px; margin: 6px 0; border: 1px solid #ccc;
             border-radius: 6px; font-size: 1em;
         }
-        .time-row {
-            display: flex; align-items: center; gap: 3px; flex-wrap: nowrap;
-        }
+        .time-row { display: flex; align-items: center; gap: 3px; flex-wrap: nowrap; }
         .time-row input { text-align: center; padding: 6px 2px; }
         .time-row .year { width: 5em; }
         .time-row .small { width: 3.5em; }
@@ -179,8 +202,10 @@
     <div class="header">
         <div class="title">📅 日程提醒</div>
         <div class="btn-row">
-            <button onclick="openSettings()" title="邮件设置">📧⚙️</button>
-            <button onclick="openAddModal()" title="添加日程">➕</button>
+            <button class="btn-refresh" onclick="location.reload()" title="刷新页面">🔄</button>
+            <button class="btn-wide" onclick="openSettings()" title="邮件设置">📧⚙️</button>
+            <button class="btn-add" onclick="openAddModal()" title="添加日程">➕</button>
+            <button class="btn-darkmode" id="darkModeToggle" onclick="toggleDarkMode()" title="夜间模式">🌙</button>
         </div>
     </div>
     <div class="current-time" id="currentTime">
@@ -196,7 +221,7 @@
         </table>
     </div>
 
-    <!-- 模态框部分不变，与上版相同 -->
+    <!-- 添加/修改模态框 -->
     <div class="modal" id="editModal">
         <div class="modal-content">
             <h3 id="modalTitle">添加日程</h3>
@@ -227,6 +252,7 @@
         </div>
     </div>
 
+    <!-- 状态选择模态框 -->
     <div class="modal" id="statusModal">
         <div class="modal-content">
             <h3>选择状态</h3>
@@ -237,6 +263,7 @@
         </div>
     </div>
 
+    <!-- 提醒弹窗 -->
     <div class="modal" id="alertModal">
         <div class="modal-content" style="text-align: center;">
             <h3>⏰ 日程提醒</h3>
@@ -248,6 +275,7 @@
         </div>
     </div>
 
+    <!-- 确认完成模态框 -->
     <div class="modal" id="confirmModal">
         <div class="modal-content" style="text-align: center;">
             <p style="font-size: 1.2em;">确认标记为“已完成”？</p>
@@ -258,6 +286,7 @@
         </div>
     </div>
 
+    <!-- 时间早于当前确认弹窗 -->
     <div class="modal" id="pastTimeModal">
         <div class="modal-content" style="text-align: center;">
             <p style="font-size: 1.1em;">确认要设置该时间吗？<br>该时间早于当前时间</p>
@@ -268,6 +297,7 @@
         </div>
     </div>
 
+    <!-- 设置模态框 -->
     <div class="modal" id="settingsModal">
         <div class="modal-content">
             <h3>⚙️ 设置</h3>
@@ -311,6 +341,35 @@
         // 背景滚动锁定
         function lockScroll() { modalCount++; document.body.style.overflow = 'hidden'; }
         function unlockScroll() { if (modalCount > 0) modalCount--; if (modalCount === 0) document.body.style.overflow = ''; }
+
+        // 双击禁用
+        document.addEventListener('dblclick', function(e) {
+            e.preventDefault();
+        }, {passive: false});
+
+        // 夜间模式切换
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const btn = document.getElementById('darkModeToggle');
+            if (document.body.classList.contains('dark-mode')) {
+                btn.textContent = '☀️';
+                btn.style.color = '#FFD700';
+            } else {
+                btn.textContent = '🌙';
+                btn.style.color = '';
+            }
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+
+        // 初始化夜间模式
+        (function() {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+                const btn = document.getElementById('darkModeToggle');
+                btn.textContent = '☀️';
+                btn.style.color = '#FFD700';
+            }
+        })();
 
         // ---------- 数据加载/保存 ----------
         function loadEmailReminders() {
@@ -550,7 +609,7 @@
             resetAutoScroll();
         }
 
-        // ---------- 状态相关（进行中/加油干！仅显示“已完成”）----------
+        // ---------- 状态相关 ----------
         function openStatusModal(id) {
             currentStatusScheduleId = id;
             const s = schedules.find(i => i.id === id);
@@ -568,7 +627,6 @@
                 postponeBtn.onclick = () => { closeStatusModal(); openEditModal(id); };
                 div.appendChild(postponeBtn);
             } else {
-                // 未完成时只显示“已完成”
                 const completeBtn = document.createElement('button');
                 completeBtn.textContent = '已完成';
                 completeBtn.onclick = () => { closeStatusModal(); openConfirmModal(id); };
