@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
     <title>日程提醒</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2E54A1">
@@ -43,16 +43,21 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Microsoft YaHei', sans-serif; }
         html, body {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
             touch-action: manipulation;
             -webkit-user-select: none;
             user-select: none;
         }
         body {
             background: var(--bg);
-            display: flex; flex-direction: column;
-            height: 100vh; overflow: hidden; font-size: var(--base-font-size);
-            -webkit-overflow-scrolling: touch;
-            position: relative;
+            display: flex;
+            flex-direction: column;
+            font-size: var(--base-font-size);
             color: var(--text-color);
         }
         .header {
@@ -152,37 +157,37 @@
         }
         .btn-group .btn-danger { background: #ffcccc; }
 
-        /* 悬浮按钮容器 */
+        /* 悬浮按钮 */
         .fab-container {
             position: fixed;
             right: 12px;
-            bottom: 20px;
+            bottom: 10px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
             z-index: 20;
         }
         .fab {
             width: 42px;
             height: 42px;
             border-radius: 50%;
-            background: rgba(245, 245, 245, 0.7);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(200,200,200,0.4);
+            background: rgba(245, 245, 245, 0.55);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(200,200,200,0.3);
             font-size: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             transition: background 0.2s;
             color: #555;
             font-weight: bold;
         }
-        .fab:active { background: rgba(255,255,255,0.95); }
+        .fab:active { background: rgba(255,255,255,0.9); }
         .dark-mode .fab {
-            background: rgba(180,180,190,0.8);
+            background: rgba(180,180,190,0.6);
             border-color: rgba(255,255,255,0.2);
             color: #333;
         }
@@ -233,6 +238,10 @@
         .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
         input:checked + .slider { background-color: #2E54A1; }
         input:checked + .slider:before { transform: translateX(22px); }
+
+        /* 提醒节点勾选 */
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 12px; margin: 10px 0; }
+        .checkbox-group label { display: flex; align-items: center; gap: 4px; font-size: 0.9em; }
     </style>
 </head>
 <body>
@@ -240,7 +249,7 @@
         <div class="title">📅 日程提醒</div>
         <div class="btn-row">
             <button class="btn-refresh" onclick="location.reload()" title="刷新页面">🔄</button>
-            <button class="btn-wide" onclick="openSettings()" title="邮件设置">📧⚙️</button>
+            <button class="btn-wide" onclick="openSettings()" title="提醒设置">🔔</button>
             <button class="btn-add" onclick="openAddModal()" title="添加日程">➕</button>
             <button class="btn-darkmode" id="darkModeToggle" onclick="toggleDarkMode()" title="夜间模式">🌙</button>
         </div>
@@ -254,7 +263,9 @@
             <thead>
                 <tr><th>事项</th><th>负责人</th><th>落实人</th><th>截止时间</th><th>倒计时</th><th>操作</th></tr>
             </thead>
-            <tbody id="tableBody"></tbody>
+            <tbody id="tableBody">
+                <!-- 日程动态填充，末尾自动插入透明填充 -->
+            </tbody>
         </table>
     </div>
 
@@ -265,8 +276,7 @@
         <button class="fab" onclick="scrollToBottom()" title="最后日程">▼</button>
     </div>
 
-    <!-- ========== 模态框 ========== -->
-    <!-- 添加/修改模态框 -->
+    <!-- 模态框：添加/修改、状态、提醒、确认、早于时间、设置 -->
     <div class="modal" id="editModal">
         <div class="modal-content">
             <h3 id="modalTitle">添加日程</h3>
@@ -297,7 +307,6 @@
         </div>
     </div>
 
-    <!-- 状态选择模态框 -->
     <div class="modal" id="statusModal">
         <div class="modal-content">
             <h3>选择状态</h3>
@@ -308,7 +317,6 @@
         </div>
     </div>
 
-    <!-- 提醒弹窗 -->
     <div class="modal" id="alertModal">
         <div class="modal-content" style="text-align: center;">
             <h3>⏰ 日程提醒</h3>
@@ -320,7 +328,6 @@
         </div>
     </div>
 
-    <!-- 确认完成模态框 -->
     <div class="modal" id="confirmModal">
         <div class="modal-content" style="text-align: center;">
             <p style="font-size: 1.2em;">确认标记为“已完成”？</p>
@@ -331,7 +338,6 @@
         </div>
     </div>
 
-    <!-- 时间早于当前确认弹窗 -->
     <div class="modal" id="pastTimeModal">
         <div class="modal-content" style="text-align: center;">
             <p style="font-size: 1.1em;">确认要设置该时间吗？<br>该时间早于当前时间</p>
@@ -342,14 +348,20 @@
         </div>
     </div>
 
-    <!-- 设置模态框 -->
     <div class="modal" id="settingsModal">
         <div class="modal-content">
-            <h3>⚙️ 设置</h3>
+            <h3>🔔 提醒设置</h3>
+            <p style="font-size:0.9em; margin-bottom:8px;">选择提醒节点（可多选）</p>
+            <div class="checkbox-group" id="reminderPointsGroup">
+                <label><input type="checkbox" value="24h" checked> 提前1天</label>
+                <label><input type="checkbox" value="6h" checked> 提前6小时</label>
+                <label><input type="checkbox" value="1h" checked> 提前1小时</label>
+                <label><input type="checkbox" value="expired" checked> 到期时</label>
+            </div>
             <div class="toggle-row">
                 <span>启用系统提醒</span>
                 <label class="switch">
-                    <input type="checkbox" id="notifyEnabled">
+                    <input type="checkbox" id="notifyEnabled" checked>
                     <span class="slider"></span>
                 </label>
             </div>
@@ -374,7 +386,6 @@
     <script>
         emailjs.init('');
 
-        // ========== 全局变量 ==========
         const STORAGE_KEY = 'schedules_data';
         const REMINDER_FIRED_KEY = 'reminder_fired';
         const SETTINGS_KEY = 'app_settings';
@@ -383,12 +394,19 @@
         let alertingId = null;
         let currentStatusScheduleId = null;
         let pendingCompleteId = null;
-        let reminderFired = {}; // { scheduleId: ['24h','6h','1h','expired'] }
-        let appSettings = { notifyEnabled: true, emailEnabled: false, emailPublicKey: '', emailServiceId: '', emailTemplateId: '', emailTo: '' };
+        let reminderFired = {};
+        let appSettings = {
+            reminderPoints: ['24h','6h','1h','expired'],
+            notifyEnabled: true,
+            emailEnabled: false,
+            emailPublicKey: '',
+            emailServiceId: '',
+            emailTemplateId: '',
+            emailTo: ''
+        };
         let pastTimePending = null;
         let modalCount = 0;
 
-        // 夜间模式
         function toggleDarkMode() {
             document.body.classList.toggle('dark-mode');
             const btn = document.getElementById('darkModeToggle');
@@ -421,22 +439,38 @@
         }
         function saveReminderFired() { localStorage.setItem(REMINDER_FIRED_KEY, JSON.stringify(reminderFired)); }
         function resetReminderFiredForSchedule(id) { delete reminderFired[id]; saveReminderFired(); }
-        function loadData() { const raw = localStorage.getItem(STORAGE_KEY); schedules = raw ? JSON.parse(raw) : []; }
+        function loadData() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            schedules = raw ? JSON.parse(raw) : [];
+        }
         function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(schedules)); }
         function loadSettings() {
             const raw = localStorage.getItem(SETTINGS_KEY);
             if (raw) {
-                appSettings = JSON.parse(raw);
-                document.getElementById('notifyEnabled').checked = appSettings.notifyEnabled !== false;
-                document.getElementById('emailEnabled').checked = appSettings.emailEnabled || false;
-                document.getElementById('emailPublicKey').value = appSettings.emailPublicKey || '';
-                document.getElementById('emailServiceId').value = appSettings.emailServiceId || '';
-                document.getElementById('emailTemplateId').value = appSettings.emailTemplateId || '';
-                document.getElementById('emailTo').value = appSettings.emailTo || '';
-                if (appSettings.emailPublicKey) emailjs.init(appSettings.emailPublicKey);
+                try {
+                    const loaded = JSON.parse(raw);
+                    appSettings = { ...appSettings, ...loaded };
+                } catch(e) {}
             }
+            const pointsGroup = document.getElementById('reminderPointsGroup');
+            if (pointsGroup) {
+                const checks = pointsGroup.querySelectorAll('input[type=checkbox]');
+                checks.forEach(cb => {
+                    cb.checked = appSettings.reminderPoints.includes(cb.value);
+                });
+            }
+            document.getElementById('notifyEnabled').checked = appSettings.notifyEnabled;
+            document.getElementById('emailEnabled').checked = appSettings.emailEnabled;
+            document.getElementById('emailPublicKey').value = appSettings.emailPublicKey || '';
+            document.getElementById('emailServiceId').value = appSettings.emailServiceId || '';
+            document.getElementById('emailTemplateId').value = appSettings.emailTemplateId || '';
+            document.getElementById('emailTo').value = appSettings.emailTo || '';
+            if (appSettings.emailPublicKey) emailjs.init(appSettings.emailPublicKey);
         }
         function saveSettings() {
+            const pointsGroup = document.getElementById('reminderPointsGroup');
+            const checks = pointsGroup.querySelectorAll('input[type=checkbox]:checked');
+            appSettings.reminderPoints = Array.from(checks).map(cb => cb.value);
             appSettings.notifyEnabled = document.getElementById('notifyEnabled').checked;
             appSettings.emailEnabled = document.getElementById('emailEnabled').checked;
             appSettings.emailPublicKey = document.getElementById('emailPublicKey').value.trim();
@@ -446,8 +480,9 @@
             localStorage.setItem(SETTINGS_KEY, JSON.stringify(appSettings));
             if (appSettings.emailPublicKey) emailjs.init(appSettings.emailPublicKey);
         }
-        function canSendEmail() { return appSettings.emailEnabled && appSettings.emailPublicKey && appSettings.emailServiceId && appSettings.emailTemplateId && appSettings.emailTo; }
-
+        function canSendEmail() {
+            return appSettings.emailEnabled && appSettings.emailPublicKey && appSettings.emailServiceId && appSettings.emailTemplateId && appSettings.emailTo;
+        }
         function sendReminderEmail(schedule, remainingText) {
             if (!canSendEmail()) return;
             emailjs.send(appSettings.emailServiceId, appSettings.emailTemplateId, {
@@ -461,7 +496,6 @@
                 subject: `提醒事项 剩余 ${remainingText}`
             }).catch(err => console.warn('邮件发送失败:', err));
         }
-
         function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,5); }
         function getNow() { return new Date(); }
         function formatDateTime(date) {
@@ -496,7 +530,6 @@
             return parts.join(' ');
         }
 
-        // ---------- 统一的提醒检查 (24h, 6h, 1h, 到期) ----------
         function checkAllReminders(schedule, now) {
             if (schedule.completed) return;
             const dl = new Date(schedule.deadline);
@@ -504,29 +537,29 @@
             const id = schedule.id;
             if (!reminderFired[id]) reminderFired[id] = [];
 
-            const points = [
-                { key: '24h', seconds: 24*3600, label: '1天' },
-                { key: '6h', seconds: 6*3600, label: '6小时' },
-                { key: '1h', seconds: 3600, label: '1小时' },
-                { key: 'expired', seconds: 0, label: '已到期' }
-            ];
+            const pointMap = {
+                '24h': { seconds: 24*3600, label: '1天' },
+                '6h': { seconds: 6*3600, label: '6小时' },
+                '1h': { seconds: 3600, label: '1小时' },
+                'expired': { seconds: 0, label: '已到期' }
+            };
 
-            for (const point of points) {
-                if (reminderFired[id].includes(point.key)) continue;
-                const threshold = point.key === 'expired' ? 60 : 60; // 宽限60秒
+            for (const pointKey of appSettings.reminderPoints) {
+                const point = pointMap[pointKey];
+                if (!point || reminderFired[id].includes(pointKey)) continue;
+                const threshold = pointKey === 'expired' ? 60 : 60;
                 if (diffSec <= point.seconds + threshold && diffSec >= point.seconds - threshold) {
-                    reminderFired[id].push(point.key);
+                    reminderFired[id].push(pointKey);
                     saveReminderFired();
 
-                    // 系统通知
                     if (appSettings.notifyEnabled && 'Notification' in window && Notification.permission === 'granted') {
-                        new Notification('⏰ 日程提醒', { body: `${schedule.thing} - ${point.label === '已到期' ? '时间到' : '剩余' + point.label}`, tag: id + point.key });
+                        const title = pointKey === 'expired' ? `${schedule.thing} 时间到` : `${schedule.thing} 剩余${point.label}`;
+                        new Notification('⏰ 日程提醒', { body: title, tag: id + pointKey });
                     }
 
-                    // 邮件通知
                     if (canSendEmail()) {
                         let remainText = point.label;
-                        if (point.key !== 'expired') {
+                        if (pointKey !== 'expired') {
                             const parts = calcCountdownParts(schedule.deadline, now);
                             if (parts) {
                                 remainText = '';
@@ -538,8 +571,7 @@
                         sendReminderEmail(schedule, remainText);
                     }
 
-                    // 到期特殊弹窗 (仅当页面可见时)
-                    if (point.key === 'expired' && document.visibilityState === 'visible') {
+                    if (pointKey === 'expired' && document.visibilityState === 'visible') {
                         alertingId = id;
                         document.getElementById('alertMsg').innerHTML = `<strong>事项：</strong>${schedule.thing}<br>时间已到`;
                         document.getElementById('alertModal').style.display = 'flex';
@@ -549,7 +581,7 @@
             }
         }
 
-        // ---------- 缓动与滚动定位 ----------
+        // 缓动与滚动
         function easeInOutQuad(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
         function smoothScrollTo(targetY, duration = 800) {
             const container = document.getElementById('tableContainer');
@@ -565,7 +597,6 @@
             }
             requestAnimationFrame(animateScroll);
         }
-
         function findTodayRow() {
             if (!schedules.length) return null;
             const now = getNow();
@@ -577,7 +608,6 @@
             }
             return rows[0] || null;
         }
-
         function scrollToTop() { smoothScrollTo(0); }
         function scrollToToday() {
             const row = findTodayRow();
@@ -607,7 +637,7 @@
             smoothScrollTo(targetY);
         }
 
-        // ---------- 表格渲染 ----------
+        // 表格渲染
         function renderTable() {
             const now = getNow();
             document.getElementById('currentTime').innerHTML = `当前时间：${now.toLocaleString()} <span class="watermark">DESIGNED BY CDH</span>`;
@@ -658,7 +688,6 @@
                         }
                         rowClass = diffHours <= 3 ? 'row-urgent' : '';
                     }
-                    // 调用统一提醒检查
                     checkAllReminders(s, now);
                 }
 
@@ -678,9 +707,14 @@
                 `;
                 tbody.appendChild(tr);
             }
+
+            // 透明填充行，确保最后一条日程可滑动至中间
+            const fillerTr = document.createElement('tr');
+            fillerTr.innerHTML = `<td colspan="6" style="height: calc(10 * 1.5em); background: transparent; border: none;"></td>`;
+            tbody.appendChild(fillerTr);
         }
 
-        // ---------- 状态相关 ----------
+        // 状态相关
         function openStatusModal(id) {
             currentStatusScheduleId = id;
             const s = schedules.find(i => i.id === id);
@@ -757,7 +791,7 @@
             }
         }
 
-        // ---------- 添加/修改日程 ----------
+        // 添加/修改日程
         function openAddModal() {
             editingId = null;
             document.getElementById('modalTitle').textContent = '添加日程';
@@ -866,11 +900,7 @@
         }
 
         function openSettings() { loadSettings(); document.getElementById('settingsModal').style.display = 'flex'; lockScroll(); }
-        function confirmSettings() {
-            saveSettings();
-            document.getElementById('settingsModal').style.display = 'none';
-            unlockScroll();
-        }
+        function confirmSettings() { saveSettings(); document.getElementById('settingsModal').style.display = 'none'; unlockScroll(); }
 
         window.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
@@ -879,36 +909,29 @@
             }
         });
 
-        // ========== Service Worker 自动更新 ==========
+        // Service Worker 自动更新
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(registration => {
-                    registration.addEventListener('updatefound', () => {
-                        const newWorker = registration.installing;
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                newWorker.postMessage({ action: 'skipWaiting' });
-                            }
-                        });
+            navigator.serviceWorker.register('sw.js').then(reg => {
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            newWorker.postMessage({ action: 'skipWaiting' });
+                        }
                     });
-                })
-                .catch(err => console.log('Service Worker 注册失败:', err));
-
+                });
+            }).catch(err => console.log('SW注册失败:', err));
             let refreshing = false;
             navigator.serviceWorker.addEventListener('controllerchange', () => {
-                if (!refreshing) {
-                    refreshing = true;
-                    window.location.reload();
-                }
+                if (!refreshing) { refreshing = true; window.location.reload(); }
             });
         }
 
-        // ========== 启动 ==========
+        // 启动
         function init() {
             loadData();
             loadReminderFired();
             loadSettings();
-            // 请求通知权限
             if ('Notification' in window && Notification.permission === 'default') {
                 Notification.requestPermission();
             }
