@@ -43,38 +43,27 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Microsoft YaHei', sans-serif; }
         html, body {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            overflow: hidden;
-            touch-action: manipulation;
-            -webkit-user-select: none;
-            user-select: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden; touch-action: manipulation;
+            -webkit-user-select: none; user-select: none;
         }
         body {
-            background: var(--bg);
-            display: flex; flex-direction: column;
-            font-size: var(--base-font-size);
-            color: var(--text-color);
+            background: var(--bg); display: flex; flex-direction: column;
+            font-size: var(--base-font-size); color: var(--text-color);
         }
         .header {
             background: var(--header-bg); color: var(--header-text); padding: 0 8px;
             display: flex; align-items: center; justify-content: space-between;
-            height: var(--header-height); flex-shrink: 0;
-            z-index: 10;
-            gap: 4px;
+            height: var(--header-height); flex-shrink: 0; z-index: 10; gap: 4px;
         }
         .header .title {
             font-size: 1.4em; display: flex; align-items: center; gap: 6px;
             flex-shrink: 0; max-width: calc(100% - 120px);
         }
-        .header .btn-row {
-            display: flex; gap: 6px; align-items: center; flex-shrink: 0;
-        }
+        .header .btn-row { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
         .header button {
-            border: none; border-radius: 10px;
-            font-weight: bold; cursor: pointer; font-size: 1.1em;
-            display: flex; align-items: center; justify-content: center;
+            border: none; border-radius: 10px; font-weight: bold; cursor: pointer;
+            font-size: 1.1em; display: flex; align-items: center; justify-content: center;
             background: #FFF2BD; color: #333; height: 36px;
         }
         .btn-add { width: 36px; border-radius: 10px; }
@@ -92,8 +81,7 @@
         .current-time {
             background: var(--time-bg); padding: 0 15px; font-size: 0.85em; text-align: center;
             border-bottom: 1px solid #ccc; height: var(--time-bar-height);
-            line-height: var(--time-bar-height); position: relative; flex-shrink: 0;
-            z-index: 10;
+            line-height: var(--time-bar-height); position: relative; flex-shrink: 0; z-index: 10;
         }
         .watermark {
             position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
@@ -102,37 +90,27 @@
 
         .table-container {
             flex: 1; overflow-y: auto; padding: 0 8px 70px 8px;
-            -webkit-overflow-scrolling: touch;
-            overscroll-behavior: contain;
-            touch-action: pan-y;
-            background: var(--table-bg);
+            -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+            touch-action: pan-y; background: var(--table-bg);
         }
         table {
             width: 100%; table-layout: fixed; border-collapse: collapse;
-            background: var(--table-bg); font-size: var(--base-font-size);
-            color: var(--text-color);
+            background: var(--table-bg); font-size: var(--base-font-size); color: var(--text-color);
         }
         th {
             background: var(--header-bg); color: var(--header-text); padding: 8px 4px;
             position: sticky; top: 0; z-index: 3; text-align: center;
         }
         td {
-            padding: 6px 4px; border-bottom: 1px solid #ddd; text-align: center;
-            vertical-align: middle;
+            padding: 6px 4px; border-bottom: 1px solid #ddd; text-align: center; vertical-align: middle;
         }
-        th:nth-child(1) { width: 5em; }
-        th:nth-child(2) { width: 3em; }
-        th:nth-child(3) { width: 3em; }
-        th:nth-child(4) { width: 10ch; }
-        th:nth-child(5) { width: 3.5em; }
-        th:nth-child(6) { width: 3em; }
+        th:nth-child(1) { width: 5em; } th:nth-child(2) { width: 3em; } th:nth-child(3) { width: 3em; }
+        th:nth-child(4) { width: 10ch; } th:nth-child(5) { width: 3.5em; } th:nth-child(6) { width: 3em; }
 
-        .date-separator td {
-            background: var(--separator-bg); text-align: left; padding: 8px 4px;
-        }
+        .date-separator td { background: var(--separator-bg); text-align: left; padding: 8px 4px; }
         .date-text {
-            background: #2E54A1; color: #FFF2BD; padding: 4px 8px;
-            border-radius: 4px; display: inline-block; font-weight: bold;
+            background: #2E54A1; color: #FFF2BD; padding: 4px 8px; border-radius: 4px;
+            display: inline-block; font-weight: bold;
         }
         .row-completed td { color: #8eb47e; }
         .row-completed .btn-group button { background: #e0e0e0; }
@@ -148,49 +126,31 @@
         .countdown-cell { display: flex; flex-direction: column; align-items: center; line-height: 1.4; }
         .btn-group { display: flex; flex-direction: column; gap: 3px; align-items: center; }
         .btn-group button {
-            padding: 3px 6px; font-size: 0.75em; border: none;
-            border-radius: 4px; background: #e0e0e0; cursor: pointer; width: 100%;
-            color: inherit;
+            padding: 3px 6px; font-size: 0.75em; border: none; border-radius: 4px;
+            background: #e0e0e0; cursor: pointer; width: 100%; color: inherit;
         }
         .btn-group .btn-danger { background: #ffcccc; }
 
-        /* 悬浮按钮 */
         .fab-container {
-            position: fixed;
-            right: 12px;
-            bottom: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            z-index: 20;
+            position: fixed; right: 12px; bottom: 10px; display: flex; flex-direction: column;
+            gap: 6px; z-index: 20;
         }
         .fab {
             width: 42px; height: 42px; border-radius: 50%;
-            background: rgba(245,245,245,0.55);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(200,200,200,0.3);
+            background: rgba(245,245,245,0.55); backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(200,200,200,0.3);
             font-size: 22px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            transition: background 0.2s; color: #555; font-weight: bold;
+            cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: background 0.2s;
+            color: #555; font-weight: bold;
         }
         .fab:active { background: rgba(255,255,255,0.9); }
-        .dark-mode .fab {
-            background: rgba(180,180,190,0.6);
-            border-color: rgba(255,255,255,0.2); color: #333;
-        }
+        .dark-mode .fab { background: rgba(180,180,190,0.6); border-color: rgba(255,255,255,0.2); color: #333; }
 
-        /* 版本号 */
         .version-info {
-            text-align: center;
-            padding: 4px 0 8px 0;
-            font-size: 0.7em;
-            color: rgba(0,0,0,0.12);
-            pointer-events: none;
-            flex-shrink: 0;
+            text-align: center; padding: 4px 0 8px 0; font-size: 0.7em;
+            color: rgba(0,0,0,0.12); pointer-events: none; flex-shrink: 0;
         }
-        .dark-mode .version-info {
-            color: rgba(255,255,255,0.15);
-        }
+        .dark-mode .version-info { color: rgba(255,255,255,0.15); }
 
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -202,38 +162,30 @@
         }
         .modal-content h3 { margin-bottom: 15px; color: #2E54A1; }
         .modal-content input[type="text"], .modal-content input[type="number"], .modal-content textarea {
-            width: 100%; padding: 8px; margin: 6px 0; border: 1px solid #ccc;
-            border-radius: 6px; font-size: 1em;
+            width: 100%; padding: 8px; margin: 6px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 1em;
         }
-        .modal-content input[readonly] {
-            background: #f9f9f9;
-            cursor: pointer;
-        }
+        .modal-content input[readonly] { background: #f9f9f9; cursor: pointer; }
         .time-row { display: flex; align-items: center; gap: 3px; flex-wrap: nowrap; }
         .time-row input { text-align: center; padding: 6px 2px; }
-        .time-row .year { width: 5em; }
-        .time-row .small { width: 3.5em; }
+        .time-row .year { width: 5em; } .time-row .small { width: 3.5em; }
         .time-row span { font-size: 0.85em; white-space: nowrap; }
         .quick-btns { display: flex; flex-wrap: wrap; gap: 4px; margin: 10px 0; }
         .quick-btns button {
-            background: #e0e0e0; color: black; padding: 6px 8px;
-            font-size: 0.9em; border: none; border-radius: 6px; cursor: pointer;
-            flex: 1 1 auto; min-width: 70px; text-align: center;
+            background: #e0e0e0; color: black; padding: 6px 8px; font-size: 0.9em;
+            border: none; border-radius: 6px; cursor: pointer; flex: 1 1 auto; min-width: 70px; text-align: center;
         }
         .quick-btns .break { flex-basis: 100%; height: 0; }
 
         .action-btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
         .action-btns button {
-            padding: 8px 16px; font-size: 1em; border: none; border-radius: 6px;
-            cursor: pointer; font-weight: bold;
+            padding: 8px 16px; font-size: 1em; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;
         }
         .btn-primary { background: #2E54A1; color: #FFF2BD; }
         .btn-cancel { background: #ccc; color: #333; }
 
         .status-options { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
         .status-options button {
-            padding: 10px; font-size: 1em; border: none; border-radius: 6px;
-            background: #f0f0f0; cursor: pointer;
+            padding: 10px; font-size: 1em; border: none; border-radius: 6px; background: #f0f0f0; cursor: pointer;
         }
         .toggle-row { display: flex; justify-content: space-between; align-items: center; margin: 8px 0; }
         .switch { position: relative; width: 48px; height: 26px; }
@@ -452,8 +404,23 @@
         const APP_VERSION = 'v2026.06.23-120000';
         document.getElementById('versionDisplay').textContent = APP_VERSION;
 
-        function toggleDarkMode() { /* ... 同前 ... */ }
-        (function() { if (localStorage.getItem('darkMode') === 'true') { document.body.classList.add('dark-mode'); const btn = document.getElementById('darkModeToggle'); btn.textContent = '☀️'; btn.style.color = '#FFD700'; } })();
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const btn = document.getElementById('darkModeToggle');
+            if (document.body.classList.contains('dark-mode')) {
+                btn.textContent = '☀️'; btn.style.color = '#FFD700';
+            } else {
+                btn.textContent = '🌙'; btn.style.color = '';
+            }
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+        (function() {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+                const btn = document.getElementById('darkModeToggle');
+                btn.textContent = '☀️'; btn.style.color = '#FFD700';
+            }
+        })();
 
         function lockScroll() { modalCount++; document.body.style.overflow = 'hidden'; }
         function unlockScroll() { if (modalCount > 0) modalCount--; if (modalCount === 0) document.body.style.overflow = ''; }
@@ -468,10 +435,7 @@
         function loadSettings() {
             const raw = localStorage.getItem(SETTINGS_KEY);
             if (raw) {
-                try {
-                    const loaded = JSON.parse(raw);
-                    appSettings = { ...appSettings, ...loaded };
-                } catch(e) {}
+                try { const loaded = JSON.parse(raw); appSettings = { ...appSettings, ...loaded }; } catch(e) {}
             }
             document.getElementById('defaultReminderEnabled').checked = appSettings.defaultReminderEnabled !== false;
             const pointsGroup = document.getElementById('reminderPointsGroup');
@@ -506,66 +470,319 @@
             if (appSettings.emailPublicKey) emailjs.init(appSettings.emailPublicKey);
         }
         function canSendEmail() { return appSettings.emailEnabled && appSettings.emailPublicKey && appSettings.emailServiceId && appSettings.emailTemplateId && appSettings.emailTo; }
-        function sendReminderEmail(schedule, label) { /* ... 同前 ... */ }
+        function sendReminderEmail(schedule, label) {
+            if (!canSendEmail()) return;
+            emailjs.send(appSettings.emailServiceId, appSettings.emailTemplateId, {
+                to_email: appSettings.emailTo, thing: schedule.thing,
+                responsible: schedule.responsible || '无', implementer: schedule.implementer || '无',
+                deadline: schedule.deadline, status: '提醒',
+                time: new Date().toLocaleString(), subject: `提醒事项 ${label}`
+            }).catch(err => console.warn('邮件发送失败:', err));
+        }
         function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,5); }
         function getNow() { return new Date(); }
-        function formatDateTime(date) { /* ... */ }
-        function getWeekdayCN(dateStr) { /* ... */ }
-        function calcCountdownParts(deadlineStr, now) { /* ... */ }
-        function formatAdvanceText(diffSec) { /* ... */ }
-        function checkAllReminders(schedule, now) { /* ... 保持不变 ... */ }
+        function formatDateTime(date) {
+            return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}:00`;
+        }
+        function getWeekdayCN(dateStr) {
+            const days = ['日','一','二','三','四','五','六'];
+            return '星期' + days[new Date(dateStr).getDay()];
+        }
+        function calcCountdownParts(deadlineStr, now) {
+            const dl = new Date(deadlineStr);
+            const diff = dl - now;
+            if (diff <= 0) return null;
+            const totalSec = Math.floor(diff / 1000);
+            const days = Math.floor(totalSec / 86400);
+            const hours = Math.floor((totalSec % 86400) / 3600);
+            const mins = Math.floor((totalSec % 3600) / 60);
+            const secs = totalSec % 60;
+            return { days, hours, mins, secs, totalSec };
+        }
+        function formatAdvanceText(diffSec) {
+            if (diffSec <= 0) return '';
+            const days = Math.floor(diffSec / 86400);
+            const hours = Math.floor((diffSec % 86400) / 3600);
+            const mins = Math.floor((diffSec % 3600) / 60);
+            const secs = diffSec % 60;
+            const parts = ['提前'];
+            if (days > 0) parts.push(`${days}天`);
+            if (hours > 0 || days > 0) parts.push(`${hours}小时`);
+            parts.push(`${mins}分钟${secs}秒`);
+            parts.push('完成');
+            return parts.join(' ');
+        }
 
-        // 缓动与滚动
+        function checkAllReminders(schedule, now) {
+            if (schedule.completed) return;
+            const dl = new Date(schedule.deadline);
+            const diffSec = Math.floor((dl - now) / 1000);
+            const id = schedule.id;
+            if (!reminderFired[id]) reminderFired[id] = [];
+
+            if (appSettings.defaultReminderEnabled) {
+                const diffDays = diffSec / 86400;
+                let defaultKey = null;
+                let defaultLabel = '';
+
+                if (diffDays <= 7 && diffDays > 0) {
+                    if (diffSec <= 3*86400 + 60 && diffSec >= 3*86400 - 60) {
+                        defaultKey = 'default_3d'; defaultLabel = '提前3天';
+                    }
+                } else if (diffDays <= 14 && diffDays > 7) {
+                    if (diffSec <= 7*86400 + 60 && diffSec >= 7*86400 - 60) {
+                        defaultKey = 'default_7d'; defaultLabel = '提前1周';
+                    }
+                } else if (diffDays > 14) {
+                    if (diffSec <= 14*86400 + 60 && diffSec >= 14*86400 - 60) {
+                        defaultKey = 'default_14d'; defaultLabel = '提前2周';
+                    }
+                }
+
+                if (defaultKey && !reminderFired[id].includes(defaultKey)) {
+                    reminderFired[id].push(defaultKey); saveReminderFired();
+                    if (appSettings.notifyEnabled && 'Notification' in window && Notification.permission === 'granted') {
+                        new Notification('⏰ 日程提醒', { body: `${schedule.thing} ${defaultLabel}`, tag: id + defaultKey });
+                    }
+                    if (canSendEmail()) sendReminderEmail(schedule, defaultLabel);
+                }
+            }
+
+            const pointMap = {
+                '24h': { seconds: 24*3600, label: '1天' },
+                '6h': { seconds: 6*3600, label: '6小时' },
+                '1h': { seconds: 3600, label: '1小时' },
+                'expired': { seconds: 0, label: '已到期' }
+            };
+
+            for (const pointKey of appSettings.reminderPoints) {
+                const point = pointMap[pointKey];
+                if (!point || reminderFired[id].includes(pointKey)) continue;
+
+                if (pointKey === 'expired') {
+                    if (diffSec <= 0 && !reminderFired[id].includes('expired')) {
+                        reminderFired[id].push('expired'); saveReminderFired();
+                        if (appSettings.notifyEnabled && 'Notification' in window && Notification.permission === 'granted') {
+                            new Notification('⏰ 日程提醒', { body: `${schedule.thing} 时间到`, tag: id + 'expired' });
+                        }
+                        if (canSendEmail()) sendReminderEmail(schedule, '已到期');
+                        if (document.visibilityState === 'visible') {
+                            alertingId = id;
+                            document.getElementById('alertMsg').innerHTML = `<strong>事项：</strong>${schedule.thing}<br>时间已到`;
+                            document.getElementById('alertModal').style.display = 'flex'; lockScroll();
+                        }
+                    }
+                } else {
+                    const threshold = 60;
+                    if (diffSec <= point.seconds + threshold && diffSec >= point.seconds - threshold && diffSec > 0) {
+                        reminderFired[id].push(pointKey); saveReminderFired();
+                        if (appSettings.notifyEnabled && 'Notification' in window && Notification.permission === 'granted') {
+                            new Notification('⏰ 日程提醒', { body: `${schedule.thing} 剩余${point.label}`, tag: id + pointKey });
+                        }
+                        if (canSendEmail()) sendReminderEmail(schedule, `剩余${point.label}`);
+                    }
+                }
+            }
+        }
+
         function easeInOutQuad(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
-        function smoothScrollTo(targetY, duration = 800) { /* ... */ }
-        function findTodayRow() { /* ... */ }
+        function smoothScrollTo(targetY, duration = 800) {
+            const container = document.getElementById('tableContainer');
+            const startY = container.scrollTop;
+            const change = targetY - startY;
+            const startTime = performance.now();
+            function animateScroll(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = easeInOutQuad(progress);
+                container.scrollTop = startY + change * eased;
+                if (progress < 1) requestAnimationFrame(animateScroll);
+            }
+            requestAnimationFrame(animateScroll);
+        }
+        function findTodayRow() {
+            if (!schedules.length) return null;
+            const now = getNow(); const todayStr = now.toISOString().slice(0,10);
+            const first = schedules.find(s => !s.completed && s.deadline.slice(0,10) >= todayStr) || schedules[0];
+            const rows = document.querySelectorAll('#tableBody tr');
+            for (const row of rows) { if (row.cells[0]?.textContent === first.thing) return row; }
+            return rows[0] || null;
+        }
         function scrollToTop() { smoothScrollTo(0); }
-        function scrollToToday() { /* ... */ }
-        function scrollToBottom() { /* ... */ }
+        function scrollToToday() {
+            const row = findTodayRow(); if (!row) return;
+            const container = document.getElementById('tableContainer');
+            const rowTop = row.offsetTop; const rowHeight = row.offsetHeight;
+            const containerHeight = container.clientHeight;
+            let targetY = rowTop - (containerHeight / 2) + (rowHeight / 2);
+            if (targetY < 0) targetY = 0;
+            const maxScroll = container.scrollHeight - containerHeight;
+            if (targetY > maxScroll) targetY = maxScroll;
+            smoothScrollTo(targetY);
+        }
+        function scrollToBottom() {
+            const container = document.getElementById('tableContainer');
+            const rows = document.querySelectorAll('#tableBody tr'); if (!rows.length) return;
+            const lastRow = rows[rows.length - 1];
+            const rowTop = lastRow.offsetTop; const rowHeight = lastRow.offsetHeight;
+            const containerHeight = container.clientHeight;
+            let targetY = rowTop - (containerHeight / 2) + (rowHeight / 2);
+            const maxScroll = container.scrollHeight - containerHeight;
+            if (targetY > maxScroll) targetY = maxScroll;
+            if (targetY < 0) targetY = 0;
+            smoothScrollTo(targetY);
+        }
 
-        function renderTable() { /* ... 同上 ... */ }
+        function renderTable() {
+            const now = getNow();
+            document.getElementById('currentTime').innerHTML = `当前时间：${now.toLocaleString()} <span class="watermark">DESIGNED BY CDH</span>`;
+            schedules.sort((a,b) => (a.deadline||'').localeCompare(b.deadline||''));
+            const tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
+            let lastDate = '';
 
-        function openStatusModal(id) { /* ... */ }
-        function closeStatusModal() { /* ... */ }
-        function openConfirmModal(id) { /* ... */ }
-        function closeConfirmModal() { /* ... */ }
-        function confirmComplete() { /* ... */ }
-        function alertComplete() { /* ... */ }
-        function alertPostpone() { /* ... */ }
+            for (const s of schedules) {
+                const deadline = s.deadline || ''; const datePart = deadline.slice(0,10);
+                if (datePart && datePart !== lastDate) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td colspan="6" class="date-separator"><span class="date-text">${datePart} ${getWeekdayCN(datePart)}</span></td>`;
+                    tbody.appendChild(tr);
+                }
+                lastDate = datePart;
 
-        // 添加/修改日程
+                const isCompleted = s.completed || false; let rowClass = '', statusHtml = '', countdownHtml = '';
+
+                if (isCompleted) {
+                    rowClass = 'row-completed'; statusHtml = '<span class="status-text" style="color:#8eb47e;">已完成</span>';
+                    countdownHtml = s.completed_countdown || '';
+                } else if (deadline) {
+                    const dl = new Date(deadline); const diffMs = dl - now;
+                    if (diffMs <= 0) {
+                        rowClass = 'row-completed'; statusHtml = '<span class="status-text" style="color:#8eb47e;">已完成</span>';
+                        countdownHtml = '计时结束';
+                    } else {
+                        const diffHours = diffMs / 3600000; let statusColor, statusText;
+                        if (diffHours <= 1) { statusColor = '#d04040'; statusText = '时间快到了'; }
+                        else if (diffHours <= 3) { statusColor = 'orange'; statusText = '加油干！'; }
+                        else { statusColor = '#333'; statusText = '进行中'; }
+                        statusHtml = `<span class="status-text" style="color:${statusColor}; font-weight:bold;">${statusText}</span>`;
+                        const parts = calcCountdownParts(deadline, now);
+                        if (parts) {
+                            const seg = [];
+                            if (parts.days > 0) seg.push(`${parts.days}天`);
+                            if (parts.hours > 0 || parts.days > 0) seg.push(`${String(parts.hours).padStart(2,'0')}时`);
+                            if (parts.mins > 0 || parts.hours > 0 || parts.days > 0) seg.push(`${String(parts.mins).padStart(2,'0')}分`);
+                            seg.push(`${String(parts.secs).padStart(2,'0')}秒`);
+                            countdownHtml = seg.join('<br>');
+                        }
+                        rowClass = diffHours <= 3 ? 'row-urgent' : '';
+                    }
+                    checkAllReminders(s, now);
+                }
+
+                const tr = document.createElement('tr'); tr.className = rowClass;
+                tr.innerHTML = `
+                    <td>${s.thing||''}</td>
+                    <td>${s.responsible||''}</td>
+                    <td>${s.implementer||''}</td>
+                    <td><div class="deadline-cell"><span>${deadline.slice(0,10)}</span><span>${deadline.slice(11)}</span>${statusHtml}</div></td>
+                    <td><div class="countdown-cell">${countdownHtml}</div></td>
+                    <td><div class="btn-group">
+                        <button onclick="openEditModal('${s.id}')">修改</button>
+                        <button onclick="openStatusModal('${s.id}')">状态</button>
+                        <button class="btn-danger" onclick="deleteSchedule('${s.id}')">删除</button>
+                    </div></td>
+                `;
+                tbody.appendChild(tr);
+            }
+
+            const fillerTr = document.createElement('tr');
+            fillerTr.innerHTML = `<td colspan="6" style="height: calc(10 * 1.5em); background: transparent; border: none;"></td>`;
+            tbody.appendChild(fillerTr);
+        }
+
+        function openStatusModal(id) {
+            currentStatusScheduleId = id; const s = schedules.find(i => i.id === id); if (!s) return;
+            const div = document.getElementById('statusOptions'); div.innerHTML = '';
+            if (s.completed) {
+                const doneBtn = document.createElement('button'); doneBtn.textContent = '已完成'; doneBtn.disabled = true;
+                doneBtn.style.background = '#ccc'; div.appendChild(doneBtn);
+                const postponeBtn = document.createElement('button'); postponeBtn.textContent = '延期提醒';
+                postponeBtn.onclick = () => { closeStatusModal(); openEditModal(id); }; div.appendChild(postponeBtn);
+            } else {
+                const completeBtn = document.createElement('button'); completeBtn.textContent = '已完成';
+                completeBtn.onclick = () => { closeStatusModal(); openConfirmModal(id); }; div.appendChild(completeBtn);
+            }
+            document.getElementById('statusModal').style.display = 'flex'; lockScroll();
+        }
+        function closeStatusModal() { document.getElementById('statusModal').style.display = 'none'; unlockScroll(); }
+
+        function openConfirmModal(id) { pendingCompleteId = id; document.getElementById('confirmModal').style.display = 'flex'; lockScroll(); }
+        function closeConfirmModal() { pendingCompleteId = null; document.getElementById('confirmModal').style.display = 'none'; unlockScroll(); }
+        function confirmComplete() {
+            if (pendingCompleteId) {
+                const s = schedules.find(i => i.id === pendingCompleteId);
+                if (s) {
+                    const now = getNow(); const dl = new Date(s.deadline); const diffSec = Math.floor((dl - now) / 1000);
+                    if (diffSec > 0) s.completed_countdown = formatAdvanceText(diffSec); else s.completed_countdown = '';
+                    s.completed = true; resetReminderFiredForSchedule(pendingCompleteId); saveData();
+                }
+            }
+            closeConfirmModal();
+        }
+
+        function alertComplete() {
+            if (alertingId) {
+                const s = schedules.find(i => i.id === alertingId);
+                if (s) {
+                    const now = getNow(); const dl = new Date(s.deadline); const diffSec = Math.floor((dl - now) / 1000);
+                    s.completed_countdown = diffSec > 0 ? formatAdvanceText(diffSec) : ''; s.completed = true;
+                    resetReminderFiredForSchedule(alertingId); saveData();
+                }
+            }
+            document.getElementById('alertModal').style.display = 'none'; unlockScroll(); alertingId = null;
+        }
+        function alertPostpone() {
+            if (alertingId) { document.getElementById('alertModal').style.display = 'none'; unlockScroll(); openEditModal(alertingId); alertingId = null; }
+        }
+
         function openAddModal() {
-            editingId = null;
-            document.getElementById('modalTitle').textContent = '添加日程';
-            document.getElementById('thing').value = '';
-            document.getElementById('responsible').value = '';
-            document.getElementById('implementer').value = '';
-            setNowTime();
-            document.getElementById('errorMsg').textContent = '';
-            document.getElementById('editModal').style.display = 'flex';
-            lockScroll();
+            editingId = null; document.getElementById('modalTitle').textContent = '添加日程';
+            document.getElementById('thing').value = ''; document.getElementById('responsible').value = '';
+            document.getElementById('implementer').value = ''; setNowTime();
+            document.getElementById('errorMsg').textContent = ''; document.getElementById('editModal').style.display = 'flex'; lockScroll();
         }
         function openEditModal(id) {
-            const s = schedules.find(i => i.id === id);
-            if (!s) return;
-            editingId = id;
-            document.getElementById('modalTitle').textContent = '修改日程';
-            document.getElementById('thing').value = s.thing || '';
-            document.getElementById('responsible').value = s.responsible || '';
+            const s = schedules.find(i => i.id === id); if (!s) return;
+            editingId = id; document.getElementById('modalTitle').textContent = '修改日程';
+            document.getElementById('thing').value = s.thing || ''; document.getElementById('responsible').value = s.responsible || '';
             document.getElementById('implementer').value = s.implementer || '';
-            const dt = new Date(s.deadline);
+            const dt = new Date(s.deadline); document.getElementById('year').value = dt.getFullYear();
+            document.getElementById('month').value = String(dt.getMonth()+1).padStart(2,'0');
+            document.getElementById('day').value = String(dt.getDate()).padStart(2,'0');
+            document.getElementById('hour').value = String(dt.getHours()).padStart(2,'0');
+            document.getElementById('minute').value = String(dt.getMinutes()).padStart(2,'0');
+            document.getElementById('errorMsg').textContent = ''; document.getElementById('editModal').style.display = 'flex'; lockScroll();
+        }
+        function closeModal() { document.getElementById('editModal').style.display = 'none'; unlockScroll(); }
+        function setNowTime() {
+            const now = getNow(); document.getElementById('year').value = now.getFullYear();
+            document.getElementById('month').value = String(now.getMonth()+1).padStart(2,'0');
+            document.getElementById('day').value = String(now.getDate()).padStart(2,'0');
+            document.getElementById('hour').value = String(now.getHours()).padStart(2,'0');
+            document.getElementById('minute').value = String(now.getMinutes()).padStart(2,'0');
+        }
+        function quickAdd(seconds) {
+            const y=parseInt(document.getElementById('year').value), mo=parseInt(document.getElementById('month').value),
+                  d=parseInt(document.getElementById('day').value), h=parseInt(document.getElementById('hour').value),
+                  mi=parseInt(document.getElementById('minute').value);
+            if (isNaN(y)||isNaN(mo)||isNaN(d)||isNaN(h)||isNaN(mi)) return;
+            const dt = new Date(y,mo-1,d,h,mi); dt.setTime(dt.getTime() + seconds*1000);
             document.getElementById('year').value = dt.getFullYear();
             document.getElementById('month').value = String(dt.getMonth()+1).padStart(2,'0');
             document.getElementById('day').value = String(dt.getDate()).padStart(2,'0');
             document.getElementById('hour').value = String(dt.getHours()).padStart(2,'0');
             document.getElementById('minute').value = String(dt.getMinutes()).padStart(2,'0');
-            document.getElementById('errorMsg').textContent = '';
-            document.getElementById('editModal').style.display = 'flex';
-            lockScroll();
         }
-        function closeModal() { document.getElementById('editModal').style.display = 'none'; unlockScroll(); }
-        function setNowTime() { /* ... */ }
-        function quickAdd(seconds) { /* ... */ }
 
         // 人员选择
         function openPersonSelect(fieldId) {
@@ -583,15 +800,12 @@
             list.forEach(name => {
                 const label = document.createElement('label');
                 const cb = document.createElement('input');
-                cb.type = 'checkbox';
-                cb.value = name;
-                cb.checked = tempSelectedPersons.includes(name);
+                cb.type = 'checkbox'; cb.value = name; cb.checked = tempSelectedPersons.includes(name);
                 cb.addEventListener('change', () => {
                     if (cb.checked) { if (!tempSelectedPersons.includes(name)) tempSelectedPersons.push(name); }
                     else { tempSelectedPersons = tempSelectedPersons.filter(n => n !== name); }
                 });
-                label.appendChild(cb);
-                label.appendChild(document.createTextNode(name));
+                label.appendChild(cb); label.appendChild(document.createTextNode(name));
                 checkboxesDiv.appendChild(label);
             });
 
@@ -600,8 +814,7 @@
             renderCustomTags();
 
             document.getElementById('customPersonInput').value = '';
-            document.getElementById('personSelectModal').style.display = 'flex';
-            lockScroll();
+            document.getElementById('personSelectModal').style.display = 'flex'; lockScroll();
         }
         function addCustomPerson() {
             const name = document.getElementById('customPersonInput').value.trim();
@@ -609,8 +822,7 @@
             if (!tempCustomPersons.includes(name) && !tempSelectedPersons.includes(name)) {
                 tempCustomPersons.push(name);
             }
-            document.getElementById('customPersonInput').value = '';
-            renderCustomTags();
+            document.getElementById('customPersonInput').value = ''; renderCustomTags();
         }
         function renderCustomTags() {
             const container = document.getElementById('customTagsContainer');
@@ -622,29 +834,93 @@
             const finalList = [...tempSelectedPersons];
             tempCustomPersons.forEach(n => { if (!finalList.includes(n)) finalList.push(n); });
             document.getElementById(currentPersonField).value = finalList.join(',');
+
+            // 将新添加的自定义人名自动合并到长期名单中
+            const targetList = currentPersonField === 'responsible' ? appSettings.responsibleList : appSettings.implementerList;
+            let changed = false;
+            tempCustomPersons.forEach(n => {
+                if (!targetList.includes(n)) { targetList.push(n); changed = true; }
+            });
+            if (changed) {
+                localStorage.setItem(SETTINGS_KEY, JSON.stringify(appSettings));
+                document.getElementById('responsibleListInput').value = appSettings.responsibleList.join(',');
+                document.getElementById('implementerListInput').value = appSettings.implementerList.join(',');
+            }
+
             closePersonSelect();
         }
 
-        function saveSchedule() { /* ... 同前，增加了人员字段 ... */ }
-        function closePastTimeModal() { /* ... */ }
-        function confirmPastTime() { /* ... */ }
-        function finalizeSchedule(thing, resp, impl, y, mo, d, h, mi) { /* ... */ }
-        function deleteSchedule(id) { /* ... */ }
+        function saveSchedule() {
+            const thing = document.getElementById('thing').value.trim();
+            const resp = document.getElementById('responsible').value.trim();
+            const impl = document.getElementById('implementer').value.trim();
+            const y=parseInt(document.getElementById('year').value), mo=parseInt(document.getElementById('month').value),
+                  d=parseInt(document.getElementById('day').value), h=parseInt(document.getElementById('hour').value),
+                  mi=parseInt(document.getElementById('minute').value);
+            if (!thing) { document.getElementById('errorMsg').textContent='事项不能为空'; return; }
+            if (isNaN(y)||isNaN(mo)||isNaN(d)||isNaN(h)||isNaN(mi)) { document.getElementById('errorMsg').textContent='日期时间必须填完整'; return; }
+            const deadlineDate = new Date(y,mo-1,d,h,mi);
+            if (deadlineDate <= getNow()) {
+                pastTimePending = { year: y, month: mo, day: d, hour: h, minute: mi, thing, resp, impl, isEditing: editingId };
+                document.getElementById('pastTimeModal').style.display = 'flex'; lockScroll(); return;
+            }
+            finalizeSchedule(thing, resp, impl, y, mo, d, h, mi);
+        }
+
+        function closePastTimeModal() { document.getElementById('pastTimeModal').style.display = 'none'; unlockScroll(); pastTimePending = null; }
+        function confirmPastTime() {
+            if (!pastTimePending) return;
+            const { year, month, day, hour, minute, thing, resp, impl, isEditing } = pastTimePending;
+            const deadlineStr = formatDateTime(new Date(year, month-1, day, hour, minute));
+            if (isEditing) {
+                const s = schedules.find(i => i.id === isEditing);
+                if (s) { s.deadline = deadlineStr; s.completed = true; resetReminderFiredForSchedule(isEditing); }
+            } else {
+                schedules.push({ id: generateId(), thing, responsible: resp, implementer: impl, deadline: deadlineStr, completed: true });
+            }
+            saveData(); closeModal(); closePastTimeModal();
+        }
+
+        function finalizeSchedule(thing, resp, impl, y, mo, d, h, mi) {
+            const deadlineStr = formatDateTime(new Date(y, mo-1, d, h, mi));
+            if (editingId) {
+                const s = schedules.find(i => i.id === editingId);
+                if (s) { s.deadline = deadlineStr; s.thing = thing; s.responsible = resp; s.implementer = impl; s.completed = false; resetReminderFiredForSchedule(editingId); }
+            } else {
+                schedules.push({ id: generateId(), thing, responsible: resp, implementer: impl, deadline: deadlineStr, completed: false });
+            }
+            saveData(); closeModal();
+        }
+
+        function deleteSchedule(id) {
+            if (confirm('确定删除此日程吗？')) { schedules = schedules.filter(i => i.id !== id); resetReminderFiredForSchedule(id); saveData(); }
+        }
+
         function openSettings() { loadSettings(); document.getElementById('settingsModal').style.display = 'flex'; lockScroll(); }
         function confirmSettings() { saveSettings(); document.getElementById('settingsModal').style.display = 'none'; unlockScroll(); }
 
         window.addEventListener('click', (e) => { if (e.target.classList.contains('modal')) { e.target.style.display = 'none'; unlockScroll(); } });
         document.getElementById('customPersonInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomPerson(); } });
 
-        if ('serviceWorker' in navigator) { /* ... */ }
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(reg => {
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            newWorker.postMessage({ action: 'skipWaiting' });
+                        }
+                    });
+                });
+            }).catch(err => console.log('SW注册失败:', err));
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => { if (!refreshing) { refreshing = true; window.location.reload(); } });
+        }
 
         function init() {
-            loadData();
-            loadReminderFired();
-            loadSettings();
+            loadData(); loadReminderFired(); loadSettings();
             if ('Notification' in window && Notification.permission === 'default') { Notification.requestPermission(); }
-            renderTable();
-            setInterval(renderTable, 1000);
+            renderTable(); setInterval(renderTable, 1000);
         }
         init();
     </script>
