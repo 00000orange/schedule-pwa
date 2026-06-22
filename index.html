@@ -179,6 +179,19 @@
             border-color: rgba(255,255,255,0.2); color: #333;
         }
 
+        /* 版本号 */
+        .version-info {
+            text-align: center;
+            padding: 4px 0 8px 0;
+            font-size: 0.7em;
+            color: rgba(0,0,0,0.12);
+            pointer-events: none;
+            flex-shrink: 0;
+        }
+        .dark-mode .version-info {
+            color: rgba(255,255,255,0.15);
+        }
+
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;
@@ -252,6 +265,9 @@
             <tbody id="tableBody"><!-- 动态填充，末尾自动插入透明填充 --></tbody>
         </table>
     </div>
+
+    <!-- 版本号 -->
+    <div class="version-info" id="versionDisplay">v2026.06.23-120000</div>
 
     <!-- 悬浮按钮 -->
     <div class="fab-container">
@@ -400,6 +416,10 @@
         let pastTimePending = null;
         let modalCount = 0;
 
+        // 版本号（手动更新）
+        const APP_VERSION = 'v2026.06.23-120000'; // 每次修改代码时请更新此时间戳
+        document.getElementById('versionDisplay').textContent = APP_VERSION;
+
         function toggleDarkMode() {
             document.body.classList.toggle('dark-mode');
             const btn = document.getElementById('darkModeToggle');
@@ -540,19 +560,16 @@
                 let defaultLabel = '';
 
                 if (diffDays <= 7 && diffDays > 0) {
-                    // 一周内，提前3天
                     if (diffSec <= 3*86400 + 60 && diffSec >= 3*86400 - 60) {
                         defaultKey = 'default_3d';
                         defaultLabel = '提前3天';
                     }
                 } else if (diffDays <= 14 && diffDays > 7) {
-                    // 1周外2周内，提前1周
                     if (diffSec <= 7*86400 + 60 && diffSec >= 7*86400 - 60) {
                         defaultKey = 'default_7d';
                         defaultLabel = '提前1周';
                     }
                 } else if (diffDays > 14) {
-                    // 超过2周，提前2周
                     if (diffSec <= 14*86400 + 60 && diffSec >= 14*86400 - 60) {
                         defaultKey = 'default_14d';
                         defaultLabel = '提前2周';
@@ -585,7 +602,6 @@
                 if (!point || reminderFired[id].includes(pointKey)) continue;
 
                 if (pointKey === 'expired') {
-                    // 真正到期才弹窗
                     if (diffSec <= 0 && !reminderFired[id].includes('expired')) {
                         reminderFired[id].push('expired');
                         saveReminderFired();
