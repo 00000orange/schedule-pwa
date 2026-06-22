@@ -153,39 +153,41 @@
         }
         .btn-group .btn-danger { background: #ffcccc; }
 
-        /* 悬浮按钮 */
+        /* 悬浮按钮容器 */
         .fab-container {
             position: fixed;
             right: 12px;
             bottom: 30px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
             z-index: 20;
         }
         .fab {
             width: 42px;
             height: 42px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.85);
-            backdrop-filter: blur(4px);
-            border: 1px solid #ddd;
-            font-size: 20px;
+            background: rgba(245, 245, 245, 0.85); /* 奶白色毛玻璃 */
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(200,200,200,0.4);
+            font-size: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             transition: background 0.2s;
-            color: #333;
+            color: #555;
+            font-weight: bold;
         }
         .fab:active {
-            background: rgba(255,255,255,1);
+            background: rgba(255,255,255,0.95);
         }
         .dark-mode .fab {
-            background: rgba(60,60,60,0.85);
-            border-color: #555;
-            color: #eee;
+            background: rgba(180,180,190,0.8);
+            border-color: rgba(255,255,255,0.2);
+            color: #333;
         }
 
         .modal {
@@ -261,9 +263,9 @@
 
     <!-- 悬浮按钮 -->
     <div class="fab-container">
-        <button class="fab" onclick="scrollToTop()" title="跳转到最早日程">▲</button>
-        <button class="fab" onclick="scrollToToday()" title="定位到今天日程">📍</button>
-        <button class="fab" onclick="scrollToBottom()" title="跳转到最晚日程">▼</button>
+        <button class="fab" onclick="scrollToTop()" title="最早日程">▲</button>
+        <button class="fab" onclick="scrollToToday()" title="今天日程">●</button>
+        <button class="fab" onclick="scrollToBottom()" title="最后日程">▼</button>
     </div>
 
     <!-- ========== 模态框 ========== -->
@@ -563,51 +565,46 @@
             return rows[0] || null;
         }
 
-        function scrollToToday() {
-            const row = findTodayRow();
-            if (row) {
-                const container = document.getElementById('tableContainer');
-                const targetY = row.offsetTop - container.clientHeight / 2 + row.offsetHeight / 2;
-                smoothScrollTo(targetY);
-            }
+        function scrollToTop() {
+            // 滚动到表格顶部，完整显示第一条日程
+            smoothScrollTo(0);
         }
 
-        function scrollToTop() {
+        function scrollToToday() {
+            const row = findTodayRow();
+            if (!row) return;
             const container = document.getElementById('tableContainer');
-            const rows = document.querySelectorAll('#tableBody tr');
-            if (!rows.length) return;
-            const todayRow = findTodayRow();
-            const threshold = 10;
-            // 判断是否在“最近日程”附近：当前 scrollTop 与今天行所在位置接近
-            if (todayRow && Math.abs(container.scrollTop - (todayRow.offsetTop - container.clientHeight/2)) < 50) {
-                // 跳到最顶部（第一个日程）
-                smoothScrollTo(0);
-            } else if (container.scrollTop <= threshold) {
-                // 已在顶部，跳到最底部
-                smoothScrollTo(container.scrollHeight);
-            } else {
-                // 其它情况跳到最顶部
-                smoothScrollTo(0);
-            }
+            const rowTop = row.offsetTop;
+            const rowHeight = row.offsetHeight;
+            const containerHeight = container.clientHeight;
+
+            // 计算目标位置，使该行居中显示
+            let targetY = rowTop - (containerHeight / 2) + (rowHeight / 2);
+            // 如果不能居中（目标位置小于0），则顶行显示
+            if (targetY < 0) targetY = 0;
+            // 如果目标位置超过最大滚动距离，则滚动到底部
+            const maxScroll = container.scrollHeight - containerHeight;
+            if (targetY > maxScroll) targetY = maxScroll;
+
+            smoothScrollTo(targetY);
         }
 
         function scrollToBottom() {
             const container = document.getElementById('tableContainer');
             const rows = document.querySelectorAll('#tableBody tr');
             if (!rows.length) return;
-            const todayRow = findTodayRow();
-            const threshold = 50;
-            const atBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - threshold;
-            if (atBottom) {
-                // 已在底部，跳到最近日程
-                scrollToToday();
-            } else if (todayRow && Math.abs(container.scrollTop - (todayRow.offsetTop - container.clientHeight/2)) < 50) {
-                // 在最近日程附近，跳到最底部
-                smoothScrollTo(container.scrollHeight);
-            } else {
-                // 其它情况跳到最底部
-                smoothScrollTo(container.scrollHeight);
-            }
+            const lastRow = rows[rows.length - 1];
+            const rowTop = lastRow.offsetTop;
+            const rowHeight = lastRow.offsetHeight;
+            const containerHeight = container.clientHeight;
+
+            // 计算目标位置，使最后一行居中显示
+            let targetY = rowTop - (containerHeight / 2) + (rowHeight / 2);
+            const maxScroll = container.scrollHeight - containerHeight;
+            if (targetY > maxScroll) targetY = maxScroll;
+            if (targetY < 0) targetY = 0;
+
+            smoothScrollTo(targetY);
         }
 
         // ---------- 表格渲染 ----------
