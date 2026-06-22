@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <title>日程提醒</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2E54A1">
@@ -26,6 +26,11 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Microsoft YaHei', sans-serif; }
+        html, body {
+            touch-action: manipulation; /* 禁止双击缩放 */
+            -webkit-user-select: none;
+            user-select: none;
+        }
         body {
             background: #f5f5f5; display: flex; flex-direction: column;
             height: 100vh; overflow: hidden; font-size: var(--base-font-size);
@@ -70,6 +75,7 @@
         table {
             width: 100%; table-layout: fixed; border-collapse: collapse;
             background: white; font-size: var(--base-font-size);
+            min-height: 101%; /* 保证即使内容少也能轻微滑动 */
         }
         th {
             background: #2E54A1; color: #FFF2BD; padding: 8px 4px;
@@ -94,6 +100,10 @@
             border-radius: 4px; display: inline-block; font-weight: bold;
         }
         .row-completed td { color: #8eb47e; }
+        .row-completed .btn-group button {
+            background: #e0e0e0;
+            color: inherit; /* 继承绿色 */
+        }
         .row-urgent td { color: #d04040; }
 
         .deadline-cell {
@@ -186,7 +196,7 @@
         </table>
     </div>
 
-    <!-- 添加/修改模态框 -->
+    <!-- 模态框部分不变，与上版相同 -->
     <div class="modal" id="editModal">
         <div class="modal-content">
             <h3 id="modalTitle">添加日程</h3>
@@ -217,7 +227,6 @@
         </div>
     </div>
 
-    <!-- 状态选择模态框 -->
     <div class="modal" id="statusModal">
         <div class="modal-content">
             <h3>选择状态</h3>
@@ -228,7 +237,6 @@
         </div>
     </div>
 
-    <!-- 提醒弹窗 -->
     <div class="modal" id="alertModal">
         <div class="modal-content" style="text-align: center;">
             <h3>⏰ 日程提醒</h3>
@@ -240,7 +248,6 @@
         </div>
     </div>
 
-    <!-- 确认完成模态框 -->
     <div class="modal" id="confirmModal">
         <div class="modal-content" style="text-align: center;">
             <p style="font-size: 1.2em;">确认标记为“已完成”？</p>
@@ -251,7 +258,6 @@
         </div>
     </div>
 
-    <!-- 时间早于当前确认弹窗 -->
     <div class="modal" id="pastTimeModal">
         <div class="modal-content" style="text-align: center;">
             <p style="font-size: 1.1em;">确认要设置该时间吗？<br>该时间早于当前时间</p>
@@ -262,7 +268,6 @@
         </div>
     </div>
 
-    <!-- 设置模态框 -->
     <div class="modal" id="settingsModal">
         <div class="modal-content">
             <h3>⚙️ 设置</h3>
@@ -304,39 +309,25 @@
         let modalCount = 0;
 
         // 背景滚动锁定
-        function lockScroll() {
-            modalCount++;
-            document.body.style.overflow = 'hidden';
-        }
-        function unlockScroll() {
-            if (modalCount > 0) modalCount--;
-            if (modalCount === 0) {
-                document.body.style.overflow = '';
-            }
-        }
+        function lockScroll() { modalCount++; document.body.style.overflow = 'hidden'; }
+        function unlockScroll() { if (modalCount > 0) modalCount--; if (modalCount === 0) document.body.style.overflow = ''; }
 
         // ---------- 数据加载/保存 ----------
         function loadEmailReminders() {
             const raw = localStorage.getItem(EMAIL_REMINDER_KEY);
             emailReminders = raw ? JSON.parse(raw) : {};
         }
-        function saveEmailReminders() {
-            localStorage.setItem(EMAIL_REMINDER_KEY, JSON.stringify(emailReminders));
-        }
+        function saveEmailReminders() { localStorage.setItem(EMAIL_REMINDER_KEY, JSON.stringify(emailReminders)); }
         function loadNotifiedSet() {
             const raw = localStorage.getItem(NOTIFIED_KEY);
             notifiedSet = raw ? new Set(JSON.parse(raw)) : new Set();
         }
-        function saveNotifiedSet() {
-            localStorage.setItem(NOTIFIED_KEY, JSON.stringify([...notifiedSet]));
-        }
+        function saveNotifiedSet() { localStorage.setItem(NOTIFIED_KEY, JSON.stringify([...notifiedSet])); }
         function loadData() {
             const raw = localStorage.getItem(STORAGE_KEY);
             schedules = raw ? JSON.parse(raw) : [];
         }
-        function saveData() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(schedules));
-        }
+        function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(schedules)); }
         function loadEmailSettings() {
             const raw = localStorage.getItem(EMAIL_SETTINGS_KEY);
             if (raw) {
@@ -397,6 +388,19 @@
             const secs = totalSec % 60;
             return { days, hours, mins, secs, totalSec };
         }
+        function formatAdvanceText(diffSec) {
+            if (diffSec <= 0) return '';
+            const days = Math.floor(diffSec / 86400);
+            const hours = Math.floor((diffSec % 86400) / 3600);
+            const mins = Math.floor((diffSec % 3600) / 60);
+            const secs = diffSec % 60;
+            const parts = ['提前'];
+            if (days > 0) parts.push(`${days}天`);
+            if (hours > 0 || days > 0) parts.push(`${hours}小时`);
+            parts.push(`${mins}分钟${secs}秒`);
+            parts.push('完成');
+            return parts.join(' ');
+        }
         function resetEmailRemindersForSchedule(id) {
             delete emailReminders[id];
             saveEmailReminders();
@@ -451,12 +455,12 @@
             }
         }
 
-        // ---------- 自动滚动至今天 ----------
+        // ---------- 5秒自动回弹 ----------
         function resetAutoScroll() {
             if (autoScrollTimer) clearTimeout(autoScrollTimer);
             autoScrollTimer = setTimeout(() => {
                 scrollToToday();
-            }, 10000);
+            }, 5000);
         }
         function scrollToToday() {
             if (!schedules.length) return;
@@ -546,7 +550,7 @@
             resetAutoScroll();
         }
 
-        // ---------- 状态相关 ----------
+        // ---------- 状态相关（进行中/加油干！仅显示“已完成”）----------
         function openStatusModal(id) {
             currentStatusScheduleId = id;
             const s = schedules.find(i => i.id === id);
@@ -564,51 +568,36 @@
                 postponeBtn.onclick = () => { closeStatusModal(); openEditModal(id); };
                 div.appendChild(postponeBtn);
             } else {
+                // 未完成时只显示“已完成”
                 const completeBtn = document.createElement('button');
                 completeBtn.textContent = '已完成';
                 completeBtn.onclick = () => { closeStatusModal(); openConfirmModal(id); };
                 div.appendChild(completeBtn);
-                const urgentBtn = document.createElement('button');
-                urgentBtn.textContent = '加油干！';
-                urgentBtn.onclick = () => {
-                    const sch = schedules.find(i => i.id === id);
-                    if (sch) { sch.completed = false; notifiedSet.delete(id); saveNotifiedSet(); saveData(); }
-                    closeStatusModal();
-                };
-                div.appendChild(urgentBtn);
-                const progressBtn = document.createElement('button');
-                progressBtn.textContent = '进行中';
-                progressBtn.onclick = () => {
-                    const sch = schedules.find(i => i.id === id);
-                    if (sch) { sch.completed = false; notifiedSet.delete(id); saveNotifiedSet(); saveData(); }
-                    closeStatusModal();
-                };
-                div.appendChild(progressBtn);
             }
             document.getElementById('statusModal').style.display = 'flex';
             lockScroll();
         }
-        function closeStatusModal() {
-            document.getElementById('statusModal').style.display = 'none';
-            unlockScroll();
-        }
+        function closeStatusModal() { document.getElementById('statusModal').style.display = 'none'; unlockScroll(); }
 
         function openConfirmModal(id) {
             pendingCompleteId = id;
             document.getElementById('confirmModal').style.display = 'flex';
             lockScroll();
         }
-        function closeConfirmModal() {
-            pendingCompleteId = null;
-            document.getElementById('confirmModal').style.display = 'none';
-            unlockScroll();
-        }
+        function closeConfirmModal() { pendingCompleteId = null; document.getElementById('confirmModal').style.display = 'none'; unlockScroll(); }
         function confirmComplete() {
             if (pendingCompleteId) {
                 const s = schedules.find(i => i.id === pendingCompleteId);
                 if (s) {
+                    const now = getNow();
+                    const dl = new Date(s.deadline);
+                    const diffSec = Math.floor((dl - now) / 1000);
+                    if (diffSec > 0) {
+                        s.completed_countdown = formatAdvanceText(diffSec);
+                    } else {
+                        s.completed_countdown = '';
+                    }
                     s.completed = true;
-                    s.completed_countdown = '';
                     notifiedSet.delete(pendingCompleteId);
                     saveNotifiedSet();
                     saveData();
@@ -621,7 +610,15 @@
         function alertComplete() {
             if (alertingId) {
                 const s = schedules.find(i => i.id === alertingId);
-                if (s) { s.completed = true; saveData(); resetEmailRemindersForSchedule(alertingId); }
+                if (s) {
+                    const now = getNow();
+                    const dl = new Date(s.deadline);
+                    const diffSec = Math.floor((dl - now) / 1000);
+                    s.completed_countdown = diffSec > 0 ? formatAdvanceText(diffSec) : '';
+                    s.completed = true;
+                    saveData();
+                    resetEmailRemindersForSchedule(alertingId);
+                }
             }
             document.getElementById('alertModal').style.display = 'none';
             unlockScroll();
@@ -666,10 +663,7 @@
             document.getElementById('editModal').style.display = 'flex';
             lockScroll();
         }
-        function closeModal() {
-            document.getElementById('editModal').style.display = 'none';
-            unlockScroll();
-        }
+        function closeModal() { document.getElementById('editModal').style.display = 'none'; unlockScroll(); }
         function setNowTime() {
             const now = getNow();
             document.getElementById('year').value = now.getFullYear();
@@ -711,11 +705,7 @@
             finalizeSchedule(thing, resp, impl, y, mo, d, h, mi);
         }
 
-        function closePastTimeModal() {
-            document.getElementById('pastTimeModal').style.display = 'none';
-            unlockScroll();
-            pastTimePending = null;
-        }
+        function closePastTimeModal() { document.getElementById('pastTimeModal').style.display = 'none'; unlockScroll(); pastTimePending = null; }
         function confirmPastTime() {
             if (!pastTimePending) return;
             const { year, month, day, hour, minute, thing, resp, impl, isEditing } = pastTimePending;
@@ -752,12 +742,7 @@
             }
         }
 
-        // ---------- 设置 ----------
-        function openSettings() {
-            loadEmailSettings();
-            document.getElementById('settingsModal').style.display = 'flex';
-            lockScroll();
-        }
+        function openSettings() { loadEmailSettings(); document.getElementById('settingsModal').style.display = 'flex'; lockScroll(); }
         function confirmSettings() {
             const enabled = document.getElementById('emailEnabled').checked;
             const publicKey = document.getElementById('emailPublicKey').value.trim();
@@ -773,7 +758,6 @@
             unlockScroll();
         }
 
-        // 点击遮罩关闭弹窗（同时解锁滚动）
         window.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
                 e.target.style.display = 'none';
@@ -781,7 +765,6 @@
             }
         });
 
-        // ---------- 初始化 ----------
         function init() {
             loadData();
             loadNotifiedSet();
