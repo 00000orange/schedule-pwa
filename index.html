@@ -8,7 +8,6 @@
     <meta name="theme-color" content="#2E54A1">
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
-        /* ========== 变量与基础样式 ========== */
         :root {
             --base-font-size: 14px;
             --header-height: 50px;
@@ -56,7 +55,6 @@
             position: relative;
             color: var(--text-color);
         }
-
         .header {
             background: var(--header-bg); color: var(--header-text); padding: 0 8px;
             display: flex; align-items: center; justify-content: space-between;
@@ -139,20 +137,10 @@
         .row-completed .btn-group button { background: #e0e0e0; }
         .row-urgent td { color: #d04040; }
 
-        /* 夜间模式按钮微调 */
-        .dark-mode .btn-group button {
-            background: #444;
-            color: inherit;
-        }
-        .dark-mode .btn-group .btn-danger {
-            background: #8b0000;
-        }
-        .dark-mode .row-completed .btn-group button {
-            background: #444;
-        }
-        .dark-mode .status-text:not([style*="color:#8eb47e"]) {
-            color: #ccc !important;
-        }
+        .dark-mode .btn-group button { background: #444; color: inherit; }
+        .dark-mode .btn-group .btn-danger { background: #8b0000; }
+        .dark-mode .row-completed .btn-group button { background: #444; }
+        .dark-mode .status-text:not([style*="color:#8eb47e"]) { color: #ccc !important; }
 
         .deadline-cell { display: flex; flex-direction: column; align-items: center; }
         .status-text { font-size: 0.9em; margin-top: 6px; font-weight: bold; }
@@ -164,6 +152,41 @@
             color: inherit;
         }
         .btn-group .btn-danger { background: #ffcccc; }
+
+        /* 悬浮按钮 */
+        .fab-container {
+            position: fixed;
+            right: 12px;
+            bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 20;
+        }
+        .fab {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(4px);
+            border: 1px solid #ddd;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: background 0.2s;
+            color: #333;
+        }
+        .fab:active {
+            background: rgba(255,255,255,1);
+        }
+        .dark-mode .fab {
+            background: rgba(60,60,60,0.85);
+            border-color: #555;
+            color: #eee;
+        }
 
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -236,7 +259,14 @@
         </table>
     </div>
 
-    <!-- ========== 模态框部分 ========== -->
+    <!-- 悬浮按钮 -->
+    <div class="fab-container">
+        <button class="fab" onclick="scrollToTop()" title="跳转到最早日程">▲</button>
+        <button class="fab" onclick="scrollToToday()" title="定位到今天日程">📍</button>
+        <button class="fab" onclick="scrollToBottom()" title="跳转到最晚日程">▼</button>
+    </div>
+
+    <!-- ========== 模态框 ========== -->
     <!-- 添加/修改模态框 -->
     <div class="modal" id="editModal">
         <div class="modal-content">
@@ -338,7 +368,7 @@
     <script>
         emailjs.init('');
 
-        // ========== 全局变量与状态 ==========
+        // ========== 全局变量 ==========
         const STORAGE_KEY = 'schedules_data';
         const NOTIFIED_KEY = 'notified_schedule_ids';
         const EMAIL_REMINDER_KEY = 'email_reminders_sent';
@@ -352,10 +382,9 @@
         let emailReminders = {};
         let emailSettings = { enabled: false, publicKey: '', serviceId: '', templateId: '', to: '' };
         let pastTimePending = null;
-        let autoScrollTimer = null;
         let modalCount = 0;
 
-        // ---------- 夜间模式切换 ----------
+        // 夜间模式
         function toggleDarkMode() {
             document.body.classList.toggle('dark-mode');
             const btn = document.getElementById('darkModeToggle');
@@ -377,26 +406,16 @@
             }
         })();
 
-        // ---------- 滚动锁定 ----------
         function lockScroll() { modalCount++; document.body.style.overflow = 'hidden'; }
         function unlockScroll() { if (modalCount > 0) modalCount--; if (modalCount === 0) document.body.style.overflow = ''; }
         document.addEventListener('dblclick', e => e.preventDefault(), {passive: false});
 
-        // ---------- 数据管理函数（完整） ----------
-        function loadEmailReminders() {
-            const raw = localStorage.getItem(EMAIL_REMINDER_KEY);
-            emailReminders = raw ? JSON.parse(raw) : {};
-        }
+        // ---------- 数据管理 ----------
+        function loadEmailReminders() { const raw = localStorage.getItem(EMAIL_REMINDER_KEY); emailReminders = raw ? JSON.parse(raw) : {}; }
         function saveEmailReminders() { localStorage.setItem(EMAIL_REMINDER_KEY, JSON.stringify(emailReminders)); }
-        function loadNotifiedSet() {
-            const raw = localStorage.getItem(NOTIFIED_KEY);
-            notifiedSet = raw ? new Set(JSON.parse(raw)) : new Set();
-        }
+        function loadNotifiedSet() { const raw = localStorage.getItem(NOTIFIED_KEY); notifiedSet = raw ? new Set(JSON.parse(raw)) : new Set(); }
         function saveNotifiedSet() { localStorage.setItem(NOTIFIED_KEY, JSON.stringify([...notifiedSet])); }
-        function loadData() {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            schedules = raw ? JSON.parse(raw) : [];
-        }
+        function loadData() { const raw = localStorage.getItem(STORAGE_KEY); schedules = raw ? JSON.parse(raw) : []; }
         function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(schedules)); }
         function loadEmailSettings() {
             const raw = localStorage.getItem(EMAIL_SETTINGS_KEY);
@@ -419,11 +438,7 @@
             localStorage.setItem(EMAIL_SETTINGS_KEY, JSON.stringify(emailSettings));
             if (emailSettings.publicKey) emailjs.init(emailSettings.publicKey);
         }
-
-        function canSendEmail() {
-            return emailSettings.enabled && emailSettings.publicKey && emailSettings.serviceId && emailSettings.templateId && emailSettings.to;
-        }
-
+        function canSendEmail() { return emailSettings.enabled && emailSettings.publicKey && emailSettings.serviceId && emailSettings.templateId && emailSettings.to; }
         function sendReminderEmail(schedule, remainingText) {
             if (!canSendEmail()) return;
             emailjs.send(emailSettings.serviceId, emailSettings.templateId, {
@@ -437,7 +452,6 @@
                 subject: `提醒事项 剩余 ${remainingText}`
             }).catch(err => console.warn('邮件发送失败:', err));
         }
-
         function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,5); }
         function getNow() { return new Date(); }
         function formatDateTime(date) {
@@ -471,10 +485,7 @@
             parts.push('完成');
             return parts.join(' ');
         }
-        function resetEmailRemindersForSchedule(id) {
-            delete emailReminders[id];
-            saveEmailReminders();
-        }
+        function resetEmailRemindersForSchedule(id) { delete emailReminders[id]; saveEmailReminders(); }
 
         function checkEmailReminders(schedule, now) {
             if (!canSendEmail() || schedule.completed) return;
@@ -503,9 +514,7 @@
         }
 
         function requestNotificationPermission() {
-            if ('Notification' in window && Notification.permission === 'default') {
-                Notification.requestPermission();
-            }
+            if ('Notification' in window && Notification.permission === 'default') { Notification.requestPermission(); }
         }
         function showSystemNotification(schedule) {
             if ('Notification' in window && Notification.permission === 'granted') {
@@ -525,22 +534,79 @@
             }
         }
 
-        // ---------- 自动滚动 ----------
-        function resetAutoScroll() {
-            if (autoScrollTimer) clearTimeout(autoScrollTimer);
-            autoScrollTimer = setTimeout(() => scrollToToday(), 5000);
+        // ---------- 缓动与滚动定位 ----------
+        function easeInOutQuad(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+        function smoothScrollTo(targetY, duration = 800) {
+            const container = document.getElementById('tableContainer');
+            const startY = container.scrollTop;
+            const change = targetY - startY;
+            const startTime = performance.now();
+            function animateScroll(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = easeInOutQuad(progress);
+                container.scrollTop = startY + change * eased;
+                if (progress < 1) requestAnimationFrame(animateScroll);
+            }
+            requestAnimationFrame(animateScroll);
         }
-        function scrollToToday() {
-            if (!schedules.length) return;
+
+        function findTodayRow() {
+            if (!schedules.length) return null;
             const now = getNow();
             const todayStr = now.toISOString().slice(0,10);
             const first = schedules.find(s => !s.completed && s.deadline.slice(0,10) >= todayStr) || schedules[0];
             const rows = document.querySelectorAll('#tableBody tr');
             for (const row of rows) {
-                if (row.cells[0]?.textContent === first.thing) {
-                    row.scrollIntoView({ block: 'center' });
-                    break;
-                }
+                if (row.cells[0]?.textContent === first.thing) return row;
+            }
+            return rows[0] || null;
+        }
+
+        function scrollToToday() {
+            const row = findTodayRow();
+            if (row) {
+                const container = document.getElementById('tableContainer');
+                const targetY = row.offsetTop - container.clientHeight / 2 + row.offsetHeight / 2;
+                smoothScrollTo(targetY);
+            }
+        }
+
+        function scrollToTop() {
+            const container = document.getElementById('tableContainer');
+            const rows = document.querySelectorAll('#tableBody tr');
+            if (!rows.length) return;
+            const todayRow = findTodayRow();
+            const threshold = 10;
+            // 判断是否在“最近日程”附近：当前 scrollTop 与今天行所在位置接近
+            if (todayRow && Math.abs(container.scrollTop - (todayRow.offsetTop - container.clientHeight/2)) < 50) {
+                // 跳到最顶部（第一个日程）
+                smoothScrollTo(0);
+            } else if (container.scrollTop <= threshold) {
+                // 已在顶部，跳到最底部
+                smoothScrollTo(container.scrollHeight);
+            } else {
+                // 其它情况跳到最顶部
+                smoothScrollTo(0);
+            }
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('tableContainer');
+            const rows = document.querySelectorAll('#tableBody tr');
+            if (!rows.length) return;
+            const todayRow = findTodayRow();
+            const threshold = 50;
+            const atBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - threshold;
+            if (atBottom) {
+                // 已在底部，跳到最近日程
+                scrollToToday();
+            } else if (todayRow && Math.abs(container.scrollTop - (todayRow.offsetTop - container.clientHeight/2)) < 50) {
+                // 在最近日程附近，跳到最底部
+                smoothScrollTo(container.scrollHeight);
+            } else {
+                // 其它情况跳到最底部
+                smoothScrollTo(container.scrollHeight);
             }
         }
 
@@ -615,10 +681,9 @@
                 `;
                 tbody.appendChild(tr);
             }
-            resetAutoScroll();
         }
 
-        // ---------- 状态与模态框操作 ----------
+        // ---------- 状态相关 ----------
         function openStatusModal(id) {
             currentStatusScheduleId = id;
             const s = schedules.find(i => i.id === id);
@@ -833,12 +898,10 @@
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js')
                 .then(registration => {
-                    // 监听新 Service Worker 安装
                     registration.addEventListener('updatefound', () => {
                         const newWorker = registration.installing;
                         newWorker.addEventListener('statechange', () => {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // 新版本已就绪，自动刷新页面（静默更新）
                                 newWorker.postMessage({ action: 'skipWaiting' });
                             }
                         });
@@ -846,7 +909,6 @@
                 })
                 .catch(err => console.log('Service Worker 注册失败:', err));
 
-            // 当新 Service Worker 接管页面后，自动刷新
             let refreshing = false;
             navigator.serviceWorker.addEventListener('controllerchange', () => {
                 if (!refreshing) {
@@ -865,10 +927,6 @@
             requestNotificationPermission();
             renderTable();
             setInterval(renderTable, 1000);
-            const tc = document.getElementById('tableContainer');
-            tc.addEventListener('scroll', resetAutoScroll);
-            tc.addEventListener('touchmove', resetAutoScroll);
-            resetAutoScroll();
         }
         init();
     </script>
